@@ -1,6 +1,5 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon } from '@ionic/react';
 import React from 'react';
-import { add } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
