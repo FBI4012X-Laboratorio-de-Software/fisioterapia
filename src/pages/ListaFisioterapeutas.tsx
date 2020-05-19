@@ -4,25 +4,21 @@ import { add } from 'ionicons/icons';
 
 const ListaFisioterapeuta: React.FC = (props: any) => {
   
-  const routeName = 'Lista Fisioterapeuta';
+  const routeName = 'Lista fisioterapeutas';
   
   return (
     <IonPage>
+      
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
             <IonMenuButton />
           </IonButtons>
-          <IonTitle>{routeName}</IonTitle>
+            <IonTitle>{ routeName }</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">{routeName}</IonTitle>
-          </IonToolbar>
-        </IonHeader>
         
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
           <IonFabButton onClick={() => props.history.push('/fisioterapeuta/novo')}>
@@ -30,7 +26,10 @@ const ListaFisioterapeuta: React.FC = (props: any) => {
           </IonFabButton>
         </IonFab>
         
+        {/* Lista de fisioterapeutas */}
+        
       </IonContent>
+      
     </IonPage>
   );
 };

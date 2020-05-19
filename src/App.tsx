@@ -23,7 +23,7 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 import ListaFisioterapeuta from './pages/ListaFisioterapeutas';
-import Fisioterapeuta from './pages/Fisioterapeuta';
+import CadastroFisioterapeuta from './pages/Fisioterapeuta';
 
 const App: React.FC = () => {
 
@@ -33,7 +33,7 @@ const App: React.FC = () => {
         <IonSplitPane contentId="main">
           <Menu />
           <IonRouterOutlet id="main">
-            <Route path="/fisioterapeuta/:id" component={Fisioterapeuta} exact />
+            <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} exact />
             <Route path="/fisioterapeutas/lista" component={ListaFisioterapeuta} exact />
             <Redirect from="/" to="/fisioterapeutas/lista" exact />
           </IonRouterOutlet>
