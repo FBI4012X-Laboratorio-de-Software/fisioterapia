@@ -45,4 +45,3 @@ export async function cadastrarFisioterapeuta(key: string, data: Fisioterapeuta)
     
   });
 }
-

@@ -2,7 +2,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import React, { useState } from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Fisioterapeuta } from './../config/classes';
-import { checkmark } from 'ionicons/icons';
+import { checkmark, checkmarkSharp } from 'ionicons/icons';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -68,7 +68,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           
           <IonItem>
             <IonLabel position="floating">Sexo</IonLabel>
-            <IonSelect interface="popover" value={sexo} onIonChange={e => setSexo(e.detail.value)}>
+            <IonSelect value={sexo} onIonChange={e => setSexo(e.detail.value)}>
               <IonSelectOption value="f">Feminino</IonSelectOption>
               <IonSelectOption value="m">Masculino</IonSelectOption>
             </IonSelect>
@@ -110,9 +110,9 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
         </IonList>}
         
         {!carregando && <IonRow>
-          <IonCol>
-            <IonButton color="success" expand="block" onClick={cadastrar}>
-              <IonIcon icon={checkmark} slot="start"></IonIcon>
+          <IonCol className="ion-text-right">
+            <IonButton color="success" onClick={cadastrar}>
+              <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
               Salvar
             </IonButton>
           </IonCol>
