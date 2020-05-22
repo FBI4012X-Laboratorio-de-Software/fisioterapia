@@ -1,5 +1,5 @@
 import * as firebase from 'firebase';
-import { Fisioterapeuta } from './classes';
+import { Fisioterapeuta, Usuario } from './classes';
 
 const config = {
   apiKey: "AIzaSyASU-qGj6DUAX05VtFb1SU81QEsQNWLh00",
@@ -40,8 +40,91 @@ export async function cadastrarFisioterapeuta(key: string, data: Fisioterapeuta)
       })
       
     } catch (error) {
+      console.log(error);
       resolve(false);
     }
+    
+  });
+}
+
+export function buscaFisioterapeutaPorEmail(email: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('fisioterapeutas/');
+  
+    ref.orderByChild('email').equalTo(email).on('value', function(data) {
+      resolve(data);
+    })
+    
+  });
+  
+}
+
+export function getUltimosFisioterapeutasCadastrados(limit: number, dataFunction = (data: any) => {}, errorFunction = (error: any) => {}) {
+  
+  const ref = firebase.database().ref('fisioterapeutas/');
+  
+  return ref.limitToLast(limit).once('value', dataFunction, errorFunction);
+  
+}
+
+export function addUserToAuthBase(cpf: string, email: string, senha: string, id: string, nome: string) {
+  return new Promise((resolve, reject) => {
+    
+    const usuario = new Usuario(id, email, senha, nome);
+    
+    try {
+      firebase.database().ref('users/' + cpf).set(usuario).then((data) => {
+        resolve(true);
+      }, (error) => {
+        resolve(false);
+      })
+      
+    } catch (error) {
+      console.log(error);
+      resolve(false);
+    }
+    
+  });
+}
+
+export function deleteUserFromAuthBase(cpf: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.remove().then(function() {
+      resolve(true);
+    })
+    .catch(function(error) {
+      reject(error.message)
+    });
+    
+  });
+}
+
+export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario | null> {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.once('value', snapshot => {
+      
+      const usu = snapshot.val();
+      
+      if (usu) {
+        
+        if (usu.senha === senha) {
+          resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome));
+        } else {
+          resolve(null);
+        }
+        
+      } else {
+        resolve(null)
+      }
+      
+    })
     
   });
 }

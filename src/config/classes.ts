@@ -10,7 +10,31 @@ export class Fisioterapeuta {
   cep: string = '';
   senha: string = '';
   ativo: boolean = true;
-  uid: string = '';
+}
+
+export function firebaseToFisioterapeuta(data: any) {
+  
+  const fisio = new Fisioterapeuta();
+  
+  let timestamp = new firebase.firestore.Timestamp(data.dataNascimento.seconds, data.dataNascimento.nanoseconds );
+  
+  fisio.ativo = data.ativo;
+  fisio.cep = data.cep;
+  fisio.cpf = data.cpf;
+  fisio.dataNascimento = timestamp.toDate();
+  fisio.email = data.email;
+  fisio.endereco = data.endereco;
+  fisio.nome = data.nome;
+  fisio.senha = data.senha;
+  fisio.sexo = data.sexo;
+  
+  return fisio;
+}
+
+export class Usuario {
+  
+  constructor(public id: string, public email: string, private senha: string, public nome: string) { }
+  
 }
 
 export class Paciente {

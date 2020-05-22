@@ -11,10 +11,13 @@ import {
   IonButton,
 } from '@ionic/react';
 
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useLocation, useHistory } from 'react-router-dom';
 import { people } from 'ionicons/icons';
 import './Menu.css';
+import { Plugins } from '@capacitor/core';
+
+const { Storage } = Plugins;
 
 interface AppPage {
   url: string;
@@ -31,15 +34,46 @@ const appPages: AppPage[] = [
 ];
 
 const Menu: React.FC = () => {
+  
+  const [userName, setUserName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  
   const location = useLocation();
-
+  const history = useHistory();
+  
+  const finalizarSessao = () => {
+    Storage.remove({ key: 'usuario_id' });
+    Storage.remove({ key: 'usuario_email' });
+    history.replace('/login');
+  };
+  
+  if (!userName) {
+    Storage.get({ key: 'usuario_nome' }).then(nome => {
+      if (typeof nome.value === 'string') {
+        setUserName(nome.value);
+      }
+    })
+    Storage.get({ key: 'usuario_email' }).then(emailUsu => {
+      if (typeof emailUsu.value === 'string') {
+        setEmail(emailUsu.value);
+      }
+    })
+  }
+  const mostraMenu = (location.pathname !== '/login');
+  
+  if (!mostraMenu) {
+    return (
+      <div />
+    );
+  }
+  
   return (
     <IonMenu contentId="main" type="overlay">
       <IonContent>
         <IonList id="inbox-list">
           
-          <IonListHeader>Nome do usuário</IonListHeader>
-          <IonNote>e-mail do usuário</IonNote>
+          <IonListHeader>{ userName }</IonListHeader>
+          <IonNote>{ email }</IonNote>
           
           {appPages.map((appPage, index) => {
             return (
@@ -53,7 +87,7 @@ const Menu: React.FC = () => {
           })}
         </IonList>
         
-        <IonButton color="primary" class="ion-margin-top">
+        <IonButton color="primary" class="ion-margin-top" onClick={finalizarSessao}>
           Finalizar sessão
         </IonButton>
         

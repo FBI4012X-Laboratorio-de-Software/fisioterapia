@@ -1,6 +1,6 @@
 import Menu from './components/Menu';
-import React from 'react';
-import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/react';
+import React, { useState, useEffect } from 'react';
+import { IonApp, IonRouterOutlet, IonSplitPane, IonRow, IonCol, IonSpinner } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Redirect, Route } from 'react-router-dom';
 
@@ -25,22 +25,51 @@ import './theme/variables.css';
 import ListaFisioterapeuta from './pages/ListaFisioterapeutas';
 import CadastroFisioterapeuta from './pages/Fisioterapeuta';
 
-const App: React.FC = () => {
+import { Plugins } from '@capacitor/core';
+import Login from './pages/Login';
 
-  return (
-    <IonApp>
-      <IonReactRouter>
-        <IonSplitPane contentId="main">
-          <Menu />
-          <IonRouterOutlet id="main">
-            <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} exact />
-            <Route path="/fisioterapeutas/lista" component={ListaFisioterapeuta} exact />
-            <Redirect from="/" to="/fisioterapeutas/lista" exact />
-          </IonRouterOutlet>
-        </IonSplitPane>
-      </IonReactRouter>
-    </IonApp>
+const { Storage } = Plugins;
+
+const App: React.FC = () => {
+  
+  const [loading, setLoading] = useState<boolean>(true);
+  
+  useEffect(function() {
+    
+    Storage.get({ key: 'usuario_id' }).then((value) => {
+      
+      if (value.value) {
+        window.history.replaceState({}, '', '/fisioterapeutas/lista');
+      } else {
+        window.history.replaceState({}, '', '/login');
+      }
+      
+      setLoading(false);
+      
+    })
+    
+  }, [loading])
+  
+  return (<IonApp>
+    {loading && <IonRow>
+      <IonCol className="ion-text-center">
+        <IonSpinner></IonSpinner>
+      </IonCol>
+    </IonRow>}
+    {!loading && <IonReactRouter>
+      <IonSplitPane contentId="main">
+        <Menu />
+        <IonRouterOutlet id="main">
+          <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} />
+          <Route path="/fisioterapeutas/lista" component={ListaFisioterapeuta} exact />
+          <Route path="/login" component={Login} />
+          <Redirect from="/" to="/fisioterapeutas/lista" exact />
+        </IonRouterOutlet>
+      </IonSplitPane>
+    </IonReactRouter>}
+  </IonApp>
   );
+  
 };
 
 export default App;
