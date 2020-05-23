@@ -49,12 +49,12 @@ const Menu: React.FC = () => {
   
   if (!userName) {
     Storage.get({ key: 'usuario_nome' }).then(nome => {
-      if (typeof nome.value === 'string') {
+      if (nome.value) {
         setUserName(nome.value);
       }
     })
     Storage.get({ key: 'usuario_email' }).then(emailUsu => {
-      if (typeof emailUsu.value === 'string') {
+      if (emailUsu.value) {
         setEmail(emailUsu.value);
       }
     })
