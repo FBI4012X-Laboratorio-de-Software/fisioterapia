@@ -22,12 +22,13 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import ListaFisioterapeuta from './pages/ListaFisioterapeutas';
+import ListaFisioterapeutas from './pages/ListaFisioterapeutas';
 import CadastroFisioterapeuta from './pages/Fisioterapeuta';
 
 import { Plugins } from '@capacitor/core';
 import Login from './pages/Login';
 import Sobre from './pages/Sobre';
+import ListaPacientes from './pages/ListaPacientes';
 
 const { Storage } = Plugins;
 
@@ -62,9 +63,10 @@ const App: React.FC = () => {
         <Menu />
         <IonRouterOutlet id="main">
           <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} />
-          <Route path="/fisioterapeutas/lista" component={ListaFisioterapeuta} exact />
+          <Route path="/fisioterapeutas/lista" component={ListaFisioterapeutas} exact />
           <Route path="/login" component={Login} />
           <Route path="/sobre" component={Sobre} />
+          <Route path="/pacientes/lista" component={ListaPacientes} />
           <Redirect from="/" to="/fisioterapeutas/lista" exact />
         </IonRouterOutlet>
       </IonSplitPane>
