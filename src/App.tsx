@@ -27,6 +27,7 @@ import CadastroFisioterapeuta from './pages/Fisioterapeuta';
 
 import { Plugins } from '@capacitor/core';
 import Login from './pages/Login';
+import Sobre from './pages/Sobre';
 
 const { Storage } = Plugins;
 
@@ -63,6 +64,7 @@ const App: React.FC = () => {
           <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} />
           <Route path="/fisioterapeutas/lista" component={ListaFisioterapeuta} exact />
           <Route path="/login" component={Login} />
+          <Route path="/sobre" component={Sobre} />
           <Redirect from="/" to="/fisioterapeutas/lista" exact />
         </IonRouterOutlet>
       </IonSplitPane>

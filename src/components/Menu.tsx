@@ -13,7 +13,7 @@ import {
 
 import React, { useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
-import { people } from 'ionicons/icons';
+import { people, personOutline, documentTextOutline, ribbonOutline } from 'ionicons/icons';
 import './Menu.css';
 import { Plugins } from '@capacitor/core';
 
@@ -30,6 +30,21 @@ const appPages: AppPage[] = [
     title: 'Fisioterapeutas',
     url: '/fisioterapeutas/lista',
     icone: people
+  },
+  {
+    title: 'Pacientes',
+    url: '/pacientes/lista',
+    icone: personOutline
+  },
+  {
+    title: 'Avaliações',
+    url: '/avaliacaoes/novo',
+    icone: documentTextOutline
+  },
+  {
+    title: 'Sobre o App',
+    url: '/sobre',
+    icone: ribbonOutline
   }
 ];
 

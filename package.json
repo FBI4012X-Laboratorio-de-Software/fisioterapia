@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@capacitor/core": "2.1.0",
+    "@capacitor/android": "^2.1.0",
+    "@capacitor/core": "^2.1.0",
     "@ionic/react": "^5.0.7",
     "@ionic/react-router": "^5.0.7",
     "@ionic/storage": "^2.2.0",
@@ -51,7 +52,7 @@
     ]
   },
   "devDependencies": {
-    "@capacitor/cli": "2.1.0"
+    "@capacitor/cli": "^2.1.0"
   },
   "description": "An Ionic project"
 }

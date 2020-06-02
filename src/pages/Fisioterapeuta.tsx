@@ -2,9 +2,9 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Fisioterapeuta } from './../config/classes';
-import { checkmarkSharp } from 'ionicons/icons';
-import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail } from '../config/firebase';
-import { addUserToAuthBase } from './../config/firebase';
+import { checkmarkSharp, cogSharp } from 'ionicons/icons';
+import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate } from '../config/firebase';
+import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -12,8 +12,9 @@ interface FisioterapeutaProps extends RouteComponentProps<{
 
 const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   
-  const novoCadastro = props.match.params.id === 'novo';
-  const routeName = novoCadastro ? 'Novo fisioterapeuta' : 'Editar fisioterapeuta';
+  let novoCadastro = props.match.params.id === 'novo';
+  let routeName = novoCadastro ? 'Novo fisioterapeuta' : 'Editar fisioterapeuta';
+  let id = props.match.params.id;
   
   const [nome, setNome] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -31,6 +32,13 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   
   useIonViewDidEnter(() => {
     
+    novoCadastro = props.match.params.id === 'novo';
+    routeName = novoCadastro ? 'Novo fisioterapeuta' : 'Editar fisioterapeuta';
+    id = props.match.params.id;
+    
+    setCarregando(false);
+    setGravando(false);
+    
     if (novoCadastro) {
       setNome('');
       setEmail('');
@@ -41,10 +49,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       setNascimento('');
       setEndereco('');
     } else {
-      
-      console.log('vai carregar o fisioterapeuta');
-      setCarregando(true);
-      
+      carregaFisioterapeuta();
     }
     
   });
@@ -139,13 +144,48 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     }
   }
   
+  function carregaFisioterapeuta() {
+    
+    setCarregando(true);
+    
+    buscaFisioterapeutaPorId(id).then((fisio: any) => {
+      
+      setAtivo(fisio.ativo);
+      setCep(fisio.cep);
+      setCpf(formatCpf(fisio.cpf));
+      setEmail(fisio.email);
+      setEndereco(fisio.endereco);
+      setNome(fisio.nome);
+      setSenha(fisio.senha);
+      setSexo(fisio.sexo);
+      setNascimento(timestampToDate(fisio.dataNascimento).toString());
+      
+      setCarregando(false);
+    })
+    
+  }
+  
   const cadastrar = () => {
     
     setGravando(true);
     
     buscaFisioterapeutaPorEmail(email).then((data: any) => {
       
+      let jaCad = true;
+      
       if (data.val() === null) {
+        jaCad = false;
+      } else {
+        
+        const keys = Object.keys(data.val());
+        
+        if (keys[0] === id) {
+          jaCad = false;
+        }
+        
+      }
+      
+      if (!jaCad) {
         
         const fisioterapeuta = new Fisioterapeuta();
         
@@ -159,9 +199,18 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
         fisioterapeuta.senha = senha;
         fisioterapeuta.dataNascimento = new Date(nascimento);
         
-        const key = getKeyNovoFisioterapeuta();
+        let key = '';
+        if (!novoCadastro) {
+          key = id;
+        } else {
+          key = getKeyNovoFisioterapeuta();
+        }
         
         cadastrarFisioterapeuta(key, fisioterapeuta).then(() => {
+          
+          if (id) {
+            deleteUserFromAuthBase(fisioterapeuta.cpf);
+          }
           
           addUserToAuthBase(fisioterapeuta.cpf, email, senha, key, nome).then(() => {
             
@@ -181,7 +230,12 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   
   const changeCpf = (e: any) => {
     
-    let cpf = e.detail.value!.trim();
+    setCpf(formatCpf(e.detail.value!.trim()));
+    
+  }
+  
+  function formatCpf(cpf: string) {
+    
     cpf = cpf.replace(/[^\d]/g, "");
     
     if (cpf.length >= 3) {
@@ -194,7 +248,8 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
     }
     
-    setCpf(cpf);
+    return cpf;
+    
   }
   
   return (
@@ -211,6 +266,12 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       <IonContent className="ion-padding">
         
         <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
+        
+        {carregando && <IonRow>
+          <IonCol className="ion-text-center">
+            <IonSpinner></IonSpinner>
+          </IonCol>  
+        </IonRow>}
         
         {!carregando && <IonList>
           

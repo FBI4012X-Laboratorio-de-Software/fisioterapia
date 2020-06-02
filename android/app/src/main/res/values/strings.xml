@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">fisioterapeuta</string>
+    <string name="title_activity_main">fisioterapeuta</string>
+    <string name="package_name">br.ucs.fisioterapia</string>
+    <string name="custom_url_scheme">br.ucs.fisioterapia</string>
+</resources>

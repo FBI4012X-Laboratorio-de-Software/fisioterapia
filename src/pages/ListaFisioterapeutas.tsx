@@ -1,23 +1,26 @@
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon, IonList, IonItem, IonLabel, IonRow, IonCol, IonSpinner, useIonViewWillEnter, IonRefresher, IonRefresherContent, IonItemSliding, IonItemOption, IonItemOptions } from '@ionic/react';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon, IonList, IonItem, IonLabel, IonRow, IonCol, IonSpinner, useIonViewWillEnter, IonRefresher, IonRefresherContent, IonItemSliding, IonItemOption, IonItemOptions, IonAlert } from '@ionic/react';
 import React, { useState } from 'react';
-import { add } from 'ionicons/icons';
-import { getUltimosFisioterapeutasCadastrados } from '../config/firebase';
-import { Fisioterapeuta, firebaseToFisioterapeuta } from '../config/classes';
+import { add, closeOutline } from 'ionicons/icons';
+import { getUltimosFisioterapeutasCadastrados, deleteFisioterapeutaPorId } from '../config/firebase';
+import { firebaseToFisioterapeuta } from '../config/classes';
+import { deleteUserFromAuthBase } from './../config/firebase';
 
 const ListaFisioterapeuta: React.FC = (props: any) => {
   
   const routeName = 'Lista fisioterapeutas';
   
-  const [dados, setDados] = useState<Array<Fisioterapeuta>>([]);
+  const [dados, setDados] = useState<Array<{key: string, nome: string, cpf: string}>>([]);
   const [carregando, setCarregando] = useState<boolean>(false);
   const [carregaPrimeiraVez, setCarregaPrimeira] = useState<boolean>(true);
+  const [confirma, setConfirma] = useState<boolean>(false);
+  const [fisioExcluir, setFisioExcluir] = useState<{ key: string, nome: string, cpf: string } | null>(null);
   
   useIonViewWillEnter(function() {
     
     setCarregando(true);
     getUltimosFisioterapeutasCadastrados(50, gotData, errorData).finally(() => {
       setCarregaPrimeira(false);
-    })
+    });
     
   });
   
@@ -55,9 +58,13 @@ const ListaFisioterapeuta: React.FC = (props: any) => {
         cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
       }
       
-      fisioterapeuta.cpf = cpf;
+      const dado = {
+        key: key,
+        nome: fisioterapeuta.nome,
+        cpf: cpf
+      }
       
-      fisioterapeutas.push(fisioterapeuta);
+      fisioterapeutas.push(dado);
       
     }
     
@@ -71,14 +78,51 @@ const ListaFisioterapeuta: React.FC = (props: any) => {
     setCarregando(false);
   }
   
-  const excluiFisioterapeuta = (fisioterapeuta: Fisioterapeuta) => {
+  const confirmaExclusao = (fisioterapeuta: any) => {
+    setConfirma(true);
+    setFisioExcluir(fisioterapeuta);
+  }
+  
+  const excluirFisioterapeuta = () => {
     
-    alert('Ainda não implementado!');
+    deleteFisioterapeutaPorId(fisioExcluir!.key).then(() => {
+      deleteUserFromAuthBase(fisioExcluir!.cpf.replace(/[^\d]/g, "")).then(() => {
+        
+        setCarregando(true);
+        getUltimosFisioterapeutasCadastrados(50, gotData, errorData).finally(() => {
+          setCarregaPrimeira(false);
+        });
+        
+      });
+    });
     
   }
   
   return (
     <IonPage>
+      
+      <IonAlert
+          isOpen={confirma}
+          onDidDismiss={() => setConfirma(false)}
+          header={'Exclusão!'}
+          message={'Confirma exclusão do fisioterapeuta?'}
+          buttons={[
+            {
+              text: 'Cancelar',
+              role: 'cancel',
+              cssClass: 'secondary',
+              handler: () => {
+                setConfirma(false);
+              }
+            },
+            {
+              text: 'Confirmar',
+              handler: () => {
+                excluirFisioterapeuta();
+              }
+            }
+          ]}
+        />
       
       <IonHeader>
         <IonToolbar>
@@ -116,15 +160,15 @@ const ListaFisioterapeuta: React.FC = (props: any) => {
         {!carregando && dados.length > 0 && <IonList>
           { dados.map((value, key) => 
           <IonItemSliding key={key}>
-            <IonItem>
+            <IonItem onClick={() => props.history.push('/fisioterapeuta/' + value.key)}>
               <IonLabel>
                 <h2>{ value.nome }</h2>
                 <p>{ value.cpf }</p>
               </IonLabel>
             </IonItem>
             <IonItemOptions>
-              <IonItemOption color="danger" onClick={() => { excluiFisioterapeuta(value) }}>
-                Excluir
+              <IonItemOption color="danger" onClick={() => { confirmaExclusao(value) }}>
+                <IonIcon icon={closeOutline}></IonIcon>
               </IonItemOption>
             </IonItemOptions>
           </IonItemSliding>

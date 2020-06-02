@@ -1,9 +1,9 @@
-import { IonContent, IonPage, IonInput, IonItem, IonLabel, IonButton, IonRow, IonCol, IonAlert, IonSpinner, useIonViewWillEnter } from '@ionic/react';
+import { IonContent, IonPage, IonInput, IonItem, IonLabel, IonButton, IonRow, IonCol, IonAlert, IonSpinner, useIonViewWillEnter, IonImg } from '@ionic/react';
 import React, { useState } from 'react';
 
 import { useHistory } from 'react-router';
 import { Plugins } from '@capacitor/core';
-import { authFromBaseWithCpf, buscaFisioterapeutaPorEmail } from '../config/firebase';
+import { authFromBaseWithCpf } from '../config/firebase';
 
 const { Storage } = Plugins;
 
@@ -14,6 +14,13 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const history = useHistory();
+  
+  const imgStyle = {
+    maxWidth: '200px',
+    left: '0',
+    right: '0',
+    margin:'0 auto',
+  };
   
   useIonViewWillEnter(() => {
     setPassword('');
@@ -78,12 +85,14 @@ const Login: React.FC = () => {
         
         <IonAlert isOpen={!!errorMessage} message={errorMessage} backdropDismiss={false} buttons={[ { text: 'Ok', handler: () => setErrorMessage('') } ]}></IonAlert>
         
+        <IonRow className="ion-margin-bottom">
+          <IonCol>
+           <IonImg src="../assets/logo.png" style={imgStyle} class="ion-align-self-end" />
+          </IonCol>
+        </IonRow>
+        
         <IonRow>
           <IonCol>
-            {/* <IonItem>
-              <IonLabel position="floating">E-mail</IonLabel>
-              <IonInput value={email} onIonChange={(e: any) => setEmail(e.target.value)}></IonInput>
-            </IonItem> */}
             <IonItem>
               <IonLabel position="floating">CPF</IonLabel>
               <IonInput value={cpf} onIonChange={changeCpf} maxlength={14}></IonInput>

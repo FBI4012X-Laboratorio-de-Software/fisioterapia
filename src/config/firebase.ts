@@ -17,6 +17,14 @@ firebase.analytics();
 
 
 
+export function timestampToDate(data: any) {
+  
+  const time = new firebase.firestore.Timestamp(data.seconds, data.nanoseconds);
+  
+  return time.toDate();
+  
+}
+
 export function getKeyNovoFisioterapeuta(): string {
   
   const res = firebase.database().ref().child('fisioterapeutas').push().key;
@@ -58,6 +66,34 @@ export function buscaFisioterapeutaPorEmail(email: string) {
     
   });
   
+}
+
+export function buscaFisioterapeutaPorId(id: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('fisioterapeutas/' + id);
+    
+    ref.once('value', (snapshot) => {
+      resolve(snapshot.val());
+    })
+    
+  });
+  
+}
+
+export function deleteFisioterapeutaPorId(id: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('fisioterapeutas/' + id);
+    
+    ref.remove().then(function() {
+      resolve(true);
+    })
+    .catch(function(error) {
+      reject(error.message)
+    });
+    
+  });
 }
 
 export function getUltimosFisioterapeutasCadastrados(limit: number, dataFunction = (data: any) => {}, errorFunction = (error: any) => {}) {
