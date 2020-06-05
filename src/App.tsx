@@ -29,6 +29,7 @@ import { Plugins } from '@capacitor/core';
 import Login from './pages/Login';
 import Sobre from './pages/Sobre';
 import ListaPacientes from './pages/ListaPacientes';
+import Paciente from './pages/Paciente';
 
 const { Storage } = Plugins;
 
@@ -41,7 +42,7 @@ const App: React.FC = () => {
     Storage.get({ key: 'usuario_id' }).then((value) => {
       
       if (value.value) {
-        window.history.replaceState({}, '', '/fisioterapeutas/lista');
+        window.history.replaceState({}, '', '/paciente/novo');
       } else {
         window.history.replaceState({}, '', '/login');
       }
@@ -67,7 +68,8 @@ const App: React.FC = () => {
           <Route path="/login" component={Login} />
           <Route path="/sobre" component={Sobre} />
           <Route path="/pacientes/lista" component={ListaPacientes} />
-          <Redirect from="/" to="/fisioterapeutas/lista" exact />
+          <Route path="/paciente/:id" component={Paciente} />
+          <Redirect from="/" to="/paciente/novo" exact />
         </IonRouterOutlet>
       </IonSplitPane>
     </IonReactRouter>}

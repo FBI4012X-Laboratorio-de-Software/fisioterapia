@@ -1,4 +1,4 @@
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon, IonList, IonItem, IonLabel, IonRow, IonCol, IonSpinner, useIonViewWillEnter, IonRefresher, IonRefresherContent, IonItemSliding, IonItemOption, IonItemOptions, IonAlert, IonButton, IonSearchbar, IonInput } from '@ionic/react';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon, IonList, IonItem, IonLabel, IonRow, IonCol, IonSpinner, useIonViewWillEnter, IonRefresher, IonRefresherContent, IonItemSliding, IonItemOption, IonItemOptions, IonAlert, IonButton, IonInput } from '@ionic/react';
 import React, { useState } from 'react';
 import { add, closeOutline, searchOutline, arrowBack } from 'ionicons/icons';
 import { getUltimosFisioterapeutasCadastrados, deleteFisioterapeutaPorId } from '../config/firebase';
@@ -20,9 +20,9 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
   
   const carregaDados = () => {
     setCarregando(true);
-    getUltimosFisioterapeutasCadastrados(50, gotData, errorData).finally(() => {
+    getUltimosFisioterapeutasCadastrados(null).then(e => gotData(e)).finally(() => {
       setCarregaPrimeira(false);
-    });
+    })
   }
   
   useIonViewWillEnter(function() {
@@ -31,27 +31,23 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
   
   const atualizaLista = (event: any) => {
     setCarregando(true);
-    getUltimosFisioterapeutasCadastrados(50, gotData, errorData).finally(() => {
+    getUltimosFisioterapeutasCadastrados(null).then(e => gotData(e)).finally(() => {
       event.detail.complete();
     })
   }
   
   function gotData(data: any) {
     
-    if (!data.val()) {
+    if (!data) {
       setCarregando(false);
       return;
     }
     
-    let valor = data.val();
-    let fisioterapeutas = [];
-    const keys = Object.keys(valor);
+    let fisioterapeutas: Array<{ key: string, nome: string, cpf: string }> = [];
     
-    for (let key of keys) {
+    for (let fisio of data) {
       
-      const fisioterapeuta = firebaseToFisioterapeuta(valor[key]);
-      
-      let cpf = fisioterapeuta.cpf.replace(/[^\d]/g, "");
+      let cpf = fisio.cpf;
       
       if (cpf.length >= 3) {
         cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
@@ -63,24 +59,13 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
         cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
       }
       
-      const dado = {
-        key: key,
-        nome: fisioterapeuta.nome,
-        cpf: cpf
-      }
-      
-      fisioterapeutas.push(dado);
+      fisioterapeutas.push({ key: fisio.codigo, nome: fisio.nome, cpf: cpf });
       
     }
-    
+          
     setDados(fisioterapeutas);
     setCarregando(false);
     
-  }
-  
-  function errorData(error: any) {
-    console.log(error);
-    setCarregando(false);
   }
   
   const confirmaExclusao = (fisioterapeuta: any) => {
@@ -94,9 +79,9 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
       deleteUserFromAuthBase(fisioExcluir!.cpf.replace(/[^\d]/g, "")).then(() => {
         
         setCarregando(true);
-        getUltimosFisioterapeutasCadastrados(50, gotData, errorData).finally(() => {
+        getUltimosFisioterapeutasCadastrados(null).then(e => gotData(e)).finally(() => {
           setCarregaPrimeira(false);
-        });
+        })
         
       });
     });
@@ -150,28 +135,29 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
         />
       
       <IonHeader>
-        {!mostraPesquisa && <IonToolbar>
-          <IonButtons slot="start">
+        <IonToolbar>
+          
+          {!mostraPesquisa && <IonButtons slot="start">
             <IonMenuButton />
-          </IonButtons>
-          <IonButtons slot="end">
+          </IonButtons>}
+          {!mostraPesquisa && <IonButtons slot="end">
             <IonButton onClick={() => { setMostraPesquisa(true); focaSearch(); } }>
               <IonIcon slot="icon-only" icon={searchOutline} />
             </IonButton>
-          </IonButtons>
-          <IonTitle>{ routeName }</IonTitle>
-        </IonToolbar>}
-        {mostraPesquisa && <IonToolbar>
+          </IonButtons>}
+          {!mostraPesquisa && <IonTitle>{ routeName }</IonTitle>}
           
-          <IonButtons slot="start">
+          {mostraPesquisa && <IonButtons slot="start">
             <IonButton onClick={() => { setMostraPesquisa(false); setFiltro('');} }>
               <IonIcon slot="icon-only" icon={arrowBack} />
             </IonButton>
-          </IonButtons>
+          </IonButtons>}
           
-          <IonInput ref={searchInput} placeholder="Filtrar nome ou cpf" value={filtro} onIonChange={e => setFiltro(e!.detail!.value!)}></IonInput>
+          {mostraPesquisa && 
+            <IonInput ref={searchInput} placeholder="Filtrar nome ou cpf" value={filtro} onIonChange={e => setFiltro(e!.detail!.value!)}></IonInput>
+          }
           
-        </IonToolbar>}
+        </IonToolbar>
       </IonHeader>
       
       <IonContent className="ion-padding">

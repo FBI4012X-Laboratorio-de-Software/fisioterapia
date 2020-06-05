@@ -1,6 +1,6 @@
 import React from 'react';
 import { IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonPage, IonFab, IonFabButton, IonIcon } from '@ionic/react';
-import { add, searchCircle, searchOutline } from 'ionicons/icons';
+import { add } from 'ionicons/icons';
 
 const ListaPacientes: React.FC = (props : any) => {
   
@@ -21,7 +21,7 @@ const ListaPacientes: React.FC = (props : any) => {
     <IonContent className="ion-padding">
       
       <IonFab vertical="bottom" horizontal="end" slot="fixed">
-        <IonFabButton onClick={() => props.history.push('/fisioterapeuta/novo')}>
+        <IonFabButton onClick={() => props.history.push('/paciente/novo')}>
           <IonIcon icon={add} />
         </IonFabButton>
       </IonFab>

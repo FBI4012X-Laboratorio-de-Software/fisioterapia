@@ -96,11 +96,39 @@ export function deleteFisioterapeutaPorId(id: string) {
   });
 }
 
-export function getUltimosFisioterapeutasCadastrados(limit: number, dataFunction = (data: any) => {}, errorFunction = (error: any) => {}) {
+export function getUltimosFisioterapeutasCadastrados(limit: number | null) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('fisioterapeutas/');
+    
+    let consulta;
+    
+    if (limit) {
+      consulta = ref.limitToLast(limit);
+    } else {
+      consulta = ref;
+    }
+    
+    consulta.once('value', (snapshot) => {
+      
+      const fisios = snapshot.val();
+      const retorno = [];
+      
+      const keys = Object.keys(fisios);
+      
+      for (const key of keys) {
+        retorno.push({ codigo: key, ...fisios[key] });
+      }
+      
+      resolve(retorno);
+      
+    }, () => {
+      resolve(null);
+    });
+    
+  });
   
-  const ref = firebase.database().ref('fisioterapeutas/');
   
-  return ref.limitToLast(limit).once('value', dataFunction, errorFunction);
   
 }
 
@@ -163,4 +191,27 @@ export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario
     })
     
   });
+}
+
+export function buscaGruposPacientes() {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('grupos_pacientes');
+    
+    ref.once('value', snapshot => {
+      
+      const grupos = snapshot.val();
+      const retorno: Array<{ codigo: string, descricao: string }> = [];
+      
+      const keys = Object.keys(grupos);
+      
+      for (const key of keys) {
+        retorno.push({ codigo: key, descricao: grupos[key].descricao });
+      }
+      
+      resolve(retorno);
+      
+    });
+    
+  })
 }

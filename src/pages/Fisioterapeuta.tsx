@@ -2,7 +2,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Fisioterapeuta } from './../config/classes';
-import { checkmarkSharp, cogSharp } from 'ionicons/icons';
+import { checkmarkSharp } from 'ionicons/icons';
 import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
 
