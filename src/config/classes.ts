@@ -18,7 +18,7 @@ export function firebaseToFisioterapeuta(data: any) {
   
   let timestamp = new firebase.firestore.Timestamp(data.dataNascimento.seconds, data.dataNascimento.nanoseconds );
   
-  fisio.ativo = data.ativo;
+  fisio.ativo = data.ativo === 'true';
   fisio.cep = data.cep;
   fisio.cpf = data.cpf;
   fisio.dataNascimento = timestamp.toDate();

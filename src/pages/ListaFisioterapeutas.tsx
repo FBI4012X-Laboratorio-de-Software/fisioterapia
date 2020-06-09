@@ -187,7 +187,7 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
         {!carregando && dadosMostra.length > 0 && <IonList>
           { dadosMostra.map((value, key) => 
           <IonItemSliding key={key}>
-            <IonItem onClick={() => props.history.push('/fisioterapeuta/' + value.key)}>
+            <IonItem routerLink={'/fisioterapeuta/' + value.key} routerDirection="none">
               <IonLabel>
                 <h2>{ value.nome }</h2>
                 <p>{ value.cpf }</p>

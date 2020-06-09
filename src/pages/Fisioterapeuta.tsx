@@ -1,4 +1,4 @@
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonIcon, IonToast, IonList, IonListHeader, IonItem, IonLabel, IonInput, IonDatetime, IonSelect, IonSelectOption, IonToggle, IonRow, IonCol, IonButton, IonSpinner, useIonViewDidEnter } from '@ionic/react';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonIcon, IonToast, IonList, IonListHeader, IonItem, IonLabel, IonInput, IonDatetime, IonSelect, IonSelectOption, IonToggle, IonRow, IonCol, IonButton, IonSpinner } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Fisioterapeuta } from './../config/classes';
@@ -22,37 +22,37 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   const [cpf, setCpf] = useState<string>('');
   const [endereco, setEndereco] = useState<string>('');
   const [cep, setCep] = useState<string>('');
-  const [ativo, setAtivo] = useState<boolean>(true);
+  const [ativo, setAtivo] = useState<boolean>(false);
   const [senha, setSenha] = useState<string>('');
   const [nascimento, setNascimento] = useState<string>('');
   const [erro, setErro] = useState<string>('');
   const [carregando, setCarregando] = useState<boolean>(false);
   const [gravando, setGravando] = useState<boolean>(false);
   const [erroCadastro, setErroCadastro] = useState<string>('');
+  const [idAnterior, setIdAnterior] = useState<string>('');
   
-  useIonViewDidEnter(() => {
-    
-    novoCadastro = props.match.params.id === 'novo';
-    routeName = novoCadastro ? 'Novo fisioterapeuta' : 'Editar fisioterapeuta';
-    id = props.match.params.id;
+  if (!idAnterior || idAnterior !== id) {
     
     setCarregando(false);
     setGravando(false);
     
-    if (novoCadastro) {
-      setNome('');
-      setEmail('');
-      setSexo('f');
-      setSenha('');
-      setCpf('');
-      setCep('');
-      setNascimento('');
-      setEndereco('');
-    } else {
+    setNome('');
+    setEmail('');
+    setSexo('f');
+    setSenha('');
+    setCpf('');
+    setCep('');
+    setNascimento('');
+    setEndereco('');
+    setAtivo(true);
+    
+    if (!novoCadastro) {
       carregaFisioterapeuta();
     }
     
-  });
+    setIdAnterior(id);
+    
+  }
   
   useEffect(function() {
     
@@ -214,6 +214,8 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           
           addUserToAuthBase(fisioterapeuta.cpf, email, senha, key, nome).then(() => {
             
+            setCarregando(false);
+            setGravando(false);
             props.history.push('/fisioterapeutas/lista');
             
           })
@@ -250,6 +252,10 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     
     return cpf;
     
+  }
+  
+  const checkAtivo = (e: any) => {
+    setAtivo(e.target.checked);
   }
   
   return (
@@ -327,7 +333,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           
           {!novoCadastro && <IonItem>
             <IonLabel>Ativo</IonLabel>
-            <IonToggle value="ativo" checked={ativo} onIonChange={e => setAtivo(e.detail.value)} disabled={gravando}/>
+            <IonToggle checked={ativo} onIonChange={checkAtivo} disabled={gravando}/>
           </IonItem>}
           
           <IonItem>
@@ -359,4 +365,3 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
 };
 
 export default CadastroFisioterapeuta;
-
