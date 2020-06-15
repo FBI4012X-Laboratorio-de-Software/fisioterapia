@@ -2,7 +2,6 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import React, { useState } from 'react';
 import { add, closeOutline, searchOutline, arrowBack } from 'ionicons/icons';
 import { getUltimosFisioterapeutasCadastrados, deleteFisioterapeutaPorId } from '../config/firebase';
-import { firebaseToFisioterapeuta } from '../config/classes';
 import { deleteUserFromAuthBase } from './../config/firebase';
 
 const ListaFisioterapeutas: React.FC = (props: any) => {

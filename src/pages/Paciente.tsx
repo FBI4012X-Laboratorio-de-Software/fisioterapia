@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
-import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados } from '../config/firebase';
+import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp } from '../config/firebase';
 import { checkmarkSharp } from 'ionicons/icons';
+import { getKeyNovoPaciente } from './../config/firebase';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -18,16 +19,27 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   const [endereco, setEndereco] = useState<string>('');
   const [cep, setCep] = useState<string>('');
   const [nascimento, setNascimento] = useState<string>('');
-  const [grupo, setGrupo] = useState<{}>();
-  const [fisioResp, setFisioResp] = useState<{}>();
+  const [grupo, setGrupo] = useState<{ codigo: string, descricao: string }>();
+  const [fisioResp, setFisioResp] = useState();
   const [carregandoGrupo, setCarregandoGrupo] = useState<boolean>(false);
   const [carregandoFisio, setCarregandoFisio] = useState<boolean>(false);
   const [gruposPacientes, setGruposPacientes] = useState<Array<{ codigo: string, descricao: string }>>([]);
   const [listaFisio, setListaFisio] = useState<Array<{ codigo: string, nome: string }>>([]);
+  const [idAnterior, setIdAnterior] = useState<string>('');
   
   let novoCadastro = props.match.params.id === 'novo';
   const routeName = novoCadastro ? 'Novo paciente' : 'Editar paciente';
   const id = props.match.params.id;
+  
+  if (!idAnterior || idAnterior !== id) {
+    
+    if (!novoCadastro) {
+      // carrega dados
+    }
+    
+    setIdAnterior(id);
+    
+  }
   
   useIonViewDidEnter(() => {
     carregaGrupos();
@@ -70,8 +82,6 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
         }
       }
       
-      console.log(listaFisio);
-      
       setCarregandoFisio(false);
       
     });
@@ -96,6 +106,33 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
     }
     
     return cpf;
+    
+  }
+  
+  const cadastrar = () => {
+    
+    setGravando(true);
+    
+    const key = novoCadastro ? getKeyNovoPaciente() : id;
+    
+    const data = {
+      nome,
+      email,
+      nascimento: dateToTimestamp(new Date(nascimento)),
+      sexo,
+      cpf: cpf.replace(/[^\d]/g, ""),
+      endereco,
+      cep,
+      grupo: grupo!.codigo,
+      responsavel: (fisioResp as any).codigo
+    };
+    
+    cadastrarPaciente(key, data).then(response => {
+      
+      setGravando(false);
+      props.history.push('/pacientes/lista');
+      
+    })
     
   }
   
@@ -177,7 +214,7 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
       
       <IonRow>
         <IonCol className="ion-text-right">
-          <IonButton color="success">
+          <IonButton color="success" onClick={cadastrar}>
             <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
             Salvar
           </IonButton>

@@ -1,9 +1,8 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonIcon, IonToast, IonList, IonListHeader, IonItem, IonLabel, IonInput, IonDatetime, IonSelect, IonSelectOption, IonToggle, IonRow, IonCol, IonButton, IonSpinner } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router';
-import { Fisioterapeuta } from './../config/classes';
-import { checkmarkSharp } from 'ionicons/icons';
-import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate } from '../config/firebase';
+import { checkmarkSharp, at } from 'ionicons/icons';
+import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
@@ -23,7 +22,6 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   const [endereco, setEndereco] = useState<string>('');
   const [cep, setCep] = useState<string>('');
   const [ativo, setAtivo] = useState<boolean>(false);
-  const [senha, setSenha] = useState<string>('');
   const [nascimento, setNascimento] = useState<string>('');
   const [erro, setErro] = useState<string>('');
   const [carregando, setCarregando] = useState<boolean>(false);
@@ -39,7 +37,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     setNome('');
     setEmail('');
     setSexo('f');
-    setSenha('');
+    // setSenha('');
     setCpf('');
     setCep('');
     setNascimento('');
@@ -91,14 +89,14 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       return;
     }
     
-    if (!senha) {
-      setErroCadastro('Senha deve ser informada!');
-      return;
-    }
+    // if (!senha) {
+    //   setErroCadastro('Senha deve ser informada!');
+    //   return;
+    // }
     
     setErroCadastro('');
     
-  }, [nome, email, nascimento, cpf, endereco, cep, senha])
+  }, [nome, email, nascimento, cpf, endereco, cep])
   
   function validaCpf(strCPF: string) {
     
@@ -150,18 +148,25 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     
     buscaFisioterapeutaPorId(id).then((fisio: any) => {
       
-      setAtivo(fisio.ativo);
       setCep(fisio.cep);
       setCpf(formatCpf(fisio.cpf));
       setEmail(fisio.email);
       setEndereco(fisio.endereco);
       setNome(fisio.nome);
-      setSenha(fisio.senha);
       setSexo(fisio.sexo);
       setNascimento(timestampToDate(fisio.dataNascimento).toString());
       
-      setCarregando(false);
-    })
+      getUserFromAuthBase(fisio.cpf).then((resp: any) => {
+        
+        if (resp) {
+          setAtivo(resp.ativo);
+        }
+        
+        setCarregando(false);
+        
+      });
+      
+    });
     
   }
   
@@ -187,17 +192,16 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       
       if (!jaCad) {
         
-        const fisioterapeuta = new Fisioterapeuta();
-        
-        fisioterapeuta.nome = nome;
-        fisioterapeuta.email = email;
-        fisioterapeuta.sexo = sexo;
-        fisioterapeuta.cpf = cpf.replace(/[^\d]/g, "");
-        fisioterapeuta.endereco = endereco;
-        fisioterapeuta.cep = cep;
-        fisioterapeuta.ativo = ativo;
-        fisioterapeuta.senha = senha;
-        fisioterapeuta.dataNascimento = new Date(nascimento);
+        const fisioterapeuta = {
+          nome: nome,
+          email: email,
+          sexo: sexo,
+          cpf: cpf.replace(/[^\d]/g, ""),
+          endereco: endereco,
+          cep: cep,
+          ativo: ativo,
+          dataNascimento: new Date(nascimento)
+        };
         
         let key = '';
         if (!novoCadastro) {
@@ -212,7 +216,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
             deleteUserFromAuthBase(fisioterapeuta.cpf);
           }
           
-          addUserToAuthBase(fisioterapeuta.cpf, email, senha, key, nome).then(() => {
+          addUserToAuthBase(fisioterapeuta.cpf, email, '', key, nome, 'F', true).then(() => {
             
             setCarregando(false);
             setGravando(false);
@@ -325,7 +329,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           
         </IonList>}
         
-        {!carregando && <IonList className="ion-margin-top">
+        {!carregando && !novoCadastro && <IonList className="ion-margin-top">
           
           <IonListHeader>
             Configuração
@@ -335,11 +339,6 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
             <IonLabel>Ativo</IonLabel>
             <IonToggle checked={ativo} onIonChange={checkAtivo} disabled={gravando}/>
           </IonItem>}
-          
-          <IonItem>
-            <IonLabel position="floating">Senha</IonLabel>
-            <IonInput type="password" value={senha} onIonChange={e => setSenha(e.detail.value!)} disabled={gravando}></IonInput>
-          </IonItem>
           
         </IonList>}
         

@@ -1,5 +1,5 @@
 import * as firebase from 'firebase';
-import { Fisioterapeuta, Usuario } from './classes';
+import { Usuario } from './classes';
 
 const config = {
   apiKey: "AIzaSyASU-qGj6DUAX05VtFb1SU81QEsQNWLh00",
@@ -25,6 +25,10 @@ export function timestampToDate(data: any) {
   
 }
 
+export function dateToTimestamp(date: Date) {
+  return firebase.firestore.Timestamp.fromDate(date);
+}
+
 export function getKeyNovoFisioterapeuta(): string {
   
   const res = firebase.database().ref().child('fisioterapeutas').push().key;
@@ -33,7 +37,7 @@ export function getKeyNovoFisioterapeuta(): string {
   
 }
 
-export async function cadastrarFisioterapeuta(key: string, data: Fisioterapeuta) {
+export async function cadastrarFisioterapeuta(key: string, data: any) {
   return new Promise((resolve, reject) => {
     
     if (data.dataNascimento instanceof Date) {
@@ -127,15 +131,12 @@ export function getUltimosFisioterapeutasCadastrados(limit: number | null) {
     });
     
   });
-  
-  
-  
 }
 
-export function addUserToAuthBase(cpf: string, email: string, senha: string, id: string, nome: string) {
+export function addUserToAuthBase(cpf: string, email: string, senha: string, id: string, nome: string, tipo: 'F' | 'P', ativo: boolean) {
   return new Promise((resolve, reject) => {
     
-    const usuario = new Usuario(id, email, senha, nome);
+    const usuario = new Usuario(id, email, senha, nome, tipo, ativo);
     
     try {
       firebase.database().ref('users/' + cpf).set(usuario).then((data) => {
@@ -143,7 +144,6 @@ export function addUserToAuthBase(cpf: string, email: string, senha: string, id:
       }, (error) => {
         resolve(false);
       })
-      
     } catch (error) {
       console.log(error);
       resolve(false);
@@ -179,7 +179,7 @@ export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario
       if (usu) {
         
         if (usu.senha === senha) {
-          resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome));
+          resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
         } else {
           resolve(null);
         }
@@ -188,6 +188,35 @@ export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario
         resolve(null)
       }
       
+    })
+    
+  });
+}
+
+export function getUserFromAuthBase(cpf: string){
+  return new Promise<Usuario>((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.once('value', snapshot => {
+      const usu = snapshot.val();
+      resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
+    });
+    
+  });
+}
+
+export function alteraUsuario(cpf: string, dados: any) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.once('value', snapshot => {
+      ref.update({ ...dados }).then(resp => {
+        resolve(true);
+      }, error => {
+        resolve(false);
+      });
     })
     
   });
@@ -214,4 +243,68 @@ export function buscaGruposPacientes() {
     });
     
   })
+}
+
+
+export async function cadastrarPaciente(key: string, data: any) {
+  return new Promise((resolve, reject) => {
+    
+    if (data.dataNascimento instanceof Date) {
+      data.dataNascimento = firebase.firestore.Timestamp.fromDate(data.dataNascimento);
+    }
+    
+    try {
+      firebase.database().ref('pacientes/' + key).set(data).then(() => {
+        resolve(true);
+      }, () => {
+        resolve(false);
+      })
+      
+    } catch (error) {
+      console.log(error);
+      resolve(false);
+    }
+    
+  });
+}
+
+export function getUltimosPacientesCadastrados(limit: number | null) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('pacientes/');
+    
+    let consulta;
+    
+    if (limit) {
+      consulta = ref.limitToLast(limit);
+    } else {
+      consulta = ref;
+    }
+    
+    consulta.once('value', (snapshot) => {
+      
+      const paciente = snapshot.val();
+      const retorno = [];
+      
+      const keys = Object.keys(paciente);
+      
+      for (const key of keys) {
+        retorno.push({ codigo: key, ...paciente[key] });
+      }
+      
+      resolve(retorno);
+      
+    }, () => {
+      resolve(null);
+    });
+    
+  });
+}
+
+export function getKeyNovoPaciente(): string {
+  
+  const res = firebase.database().ref().child('pacientes').push().key;
+  
+  return res!.toString();
+  
 }

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { useHistory } from 'react-router';
 import { Plugins } from '@capacitor/core';
-import { authFromBaseWithCpf } from '../config/firebase';
+import { authFromBaseWithCpf, getUserFromAuthBase } from '../config/firebase';
 
 const { Storage } = Plugins;
 
@@ -39,21 +39,36 @@ const Login: React.FC = () => {
     
     setLoading(true);
     
-    authFromBaseWithCpf(cpfStr, password).then(data => {
+    getUserFromAuthBase(cpfStr).then(data => {
       
-      if (data) {
-        
-        Storage.set({ key: 'usuario_id', value: data.id });
-        Storage.set({ key: 'usuario_nome', value: data.nome });
-        Storage.set({ key: 'usuario_email', value: data.email });
-        
-        history.replace('/fisioterapeutas/lista');
-        
-      } else {
+      if (!data) {
         setErrorMessage('Cpf ou senha inválidos');
+        return;
       }
       
-    }, error => {
+      if (!data.ativo) {
+        setErrorMessage('Usuário não ativo!');
+        return;
+      }
+      
+      if (!data.senha) {
+        setErrorMessage('Senha ainda não cadastrada! Acesse a opção "TROCAR SENHA" para cadastrar uma.');
+        return;
+      }
+      
+      if (data.senha !== password) {
+        setErrorMessage('Cpf ou senha inválidos');
+        return;
+      }
+      
+      Storage.set({ key: 'usuario_id', value: data.id });
+      Storage.set({ key: 'usuario_nome', value: data.nome });
+      Storage.set({ key: 'usuario_email', value: data.email });
+      Storage.set({ key: 'usuario_tipo', value: data.tipo });
+      
+      history.replace('/fisioterapeutas/lista');
+      
+    }, () => {
       setErrorMessage('Algum erro ocorreu ao processar esta opção!');
     }).finally(() => {
       setLoading(false);
@@ -77,6 +92,10 @@ const Login: React.FC = () => {
     }
     
     setCpf(cpf);
+  }
+  
+  const abreTelaTrocaSenha = () => {
+    history.replace('/trocar-senha');
   }
   
   return (
@@ -118,13 +137,21 @@ const Login: React.FC = () => {
           </IonCol>
         </IonRow>
         
-        <IonRow className="ion-padding-top">
+        <IonRow>
+          <IonCol class="ion-text-right">
+            <IonButton color="light" onClick={abreTelaTrocaSenha}>
+              Trocar senha
+            </IonButton>
+          </IonCol>
+        </IonRow>
+        
+        {/* <IonRow className="ion-padding-top">
           <IonCol>
             Usuario: 999.999.999-99
             <br />
             Senha: admin
           </IonCol>
-        </IonRow>
+        </IonRow> */}
         
       </IonContent>
     </IonPage>

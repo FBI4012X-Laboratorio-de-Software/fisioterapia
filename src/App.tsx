@@ -30,10 +30,11 @@ import Login from './pages/Login';
 import Sobre from './pages/Sobre';
 import ListaPacientes from './pages/ListaPacientes';
 import Paciente from './pages/Paciente';
+import TrocarSenha from './pages/TrocarSenha';
 
 const { Storage } = Plugins;
 
-const App: React.FC = () => {
+const App: React.FC = (props) => {
   
   const [loading, setLoading] = useState<boolean>(true);
   
@@ -41,10 +42,16 @@ const App: React.FC = () => {
     
     Storage.get({ key: 'usuario_id' }).then((value) => {
       
+      const path = window.location.pathname;
+      
       if (value.value) {
-        window.history.replaceState({}, '', '/paciente/novo');
+        if (path === '/login' || path === '/troca-senha') {
+          window.history.replaceState({}, '', '/paciente/novo');
+        }
       } else {
-        window.history.replaceState({}, '', '/login');
+        if (path !== '/login' && path !== '/troca-senha') {
+          window.history.replaceState({}, '', '/login');
+        }
       }
       
       setLoading(false);
@@ -66,6 +73,7 @@ const App: React.FC = () => {
           <Route path="/fisioterapeuta/:id" component={CadastroFisioterapeuta} />
           <Route path="/fisioterapeutas/lista" component={ListaFisioterapeutas} exact />
           <Route path="/login" component={Login} />
+          <Route path="/trocar-senha" component={TrocarSenha} />
           <Route path="/sobre" component={Sobre} />
           <Route path="/pacientes/lista" component={ListaPacientes} />
           <Route path="/paciente/:id" component={Paciente} />

@@ -16,6 +16,7 @@ import { useLocation, useHistory } from 'react-router-dom';
 import { people, personOutline, documentTextOutline, ribbonOutline } from 'ionicons/icons';
 import './Menu.css';
 import { Plugins } from '@capacitor/core';
+import { app } from 'firebase';
 
 const { Storage } = Plugins;
 
@@ -23,28 +24,33 @@ interface AppPage {
   url: string;
   title: string;
   icone: string;
+  permissao: string;
 }
 
 const appPages: AppPage[] = [
   {
     title: 'Fisioterapeutas',
     url: '/fisioterapeutas/lista',
-    icone: people
+    icone: people,
+    permissao: 'F'
   },
   {
     title: 'Pacientes',
     url: '/pacientes/lista',
-    icone: personOutline
+    icone: personOutline,
+    permissao: 'F'
   },
   {
     title: 'Avaliações',
     url: '/avaliacaoes/novo',
-    icone: documentTextOutline
+    icone: documentTextOutline,
+    permissao: 'F'
   },
   {
     title: 'Sobre o App',
     url: '/sobre',
-    icone: ribbonOutline
+    icone: ribbonOutline,
+    permissao: 'FP'
   }
 ];
 
@@ -52,28 +58,36 @@ const Menu: React.FC = () => {
   
   const [userName, setUserName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
+  const [tipoUsuario, setTipoUsuario] = useState<string>();
   
   const location = useLocation();
   const history = useHistory();
   
   const finalizarSessao = () => {
     Storage.remove({ key: 'usuario_id' });
+    Storage.remove({ key: 'usuario_nome' });
     Storage.remove({ key: 'usuario_email' });
+    Storage.remove({ key: 'usuario_tipo' });
     history.replace('/login');
   };
   
-  if (!userName) {
+  // if (!userName) {
     Storage.get({ key: 'usuario_nome' }).then(nome => {
       if (nome.value) {
         setUserName(nome.value);
       }
-    })
+    });
     Storage.get({ key: 'usuario_email' }).then(emailUsu => {
       if (emailUsu.value) {
         setEmail(emailUsu.value);
       }
+    });
+    Storage.get({ key: 'usuario_tipo' }).then(tipo => {
+      if (tipo.value) {
+        setTipoUsuario(tipo.value);
+      }
     })
-  }
+  // }
   const mostraMenu = (location.pathname !== '/login');
   
   if (!mostraMenu) {
@@ -91,6 +105,11 @@ const Menu: React.FC = () => {
           <IonNote>{ email }</IonNote>
           
           {appPages.map((appPage, index) => {
+            if (appPage.permissao !== 'FP') {
+              if (tipoUsuario !== appPage.permissao) {
+                return null;
+              }
+            }
             return (
               <IonMenuToggle key={index} autoHide={false}>
                 <IonItem className={location.pathname === appPage.url ? 'selected' : ''} routerLink={appPage.url} routerDirection="none" lines="none" detail={false}>
