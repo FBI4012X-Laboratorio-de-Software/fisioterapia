@@ -69,7 +69,6 @@ export function buscaFisioterapeutaPorEmail(email: string) {
     })
     
   });
-  
 }
 
 export function buscaFisioterapeutaPorId(id: string) {
@@ -246,7 +245,7 @@ export function buscaGruposPacientes() {
 }
 
 
-export async function cadastrarPaciente(key: string, data: any) {
+export function cadastrarPaciente(key: string, data: any) {
   return new Promise((resolve, reject) => {
     
     if (data.dataNascimento instanceof Date) {
@@ -286,6 +285,10 @@ export function getUltimosPacientesCadastrados(limit: number | null) {
       const paciente = snapshot.val();
       const retorno = [];
       
+      if (snapshot === null) {
+        resolve(null);
+      }
+      
       const keys = Object.keys(paciente);
       
       for (const key of keys) {
@@ -307,4 +310,16 @@ export function getKeyNovoPaciente(): string {
   
   return res!.toString();
   
+}
+
+export function buscaPacientePorId(id: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('pacientes/' + id);
+    
+    ref.once('value', (snapshot) => {
+      resolve(snapshot.val());
+    })
+    
+  });
 }

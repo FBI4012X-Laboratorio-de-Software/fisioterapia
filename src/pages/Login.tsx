@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { useHistory } from 'react-router';
 import { Plugins } from '@capacitor/core';
-import { authFromBaseWithCpf, getUserFromAuthBase } from '../config/firebase';
+import { getUserFromAuthBase } from '../config/firebase';
 
 const { Storage } = Plugins;
 
@@ -24,6 +24,9 @@ const Login: React.FC = () => {
   
   useIonViewWillEnter(() => {
     setPassword('');
+    setLoading(false);
+    setCpf('');
+    setErrorMessage('');
   });
   
   const doLogin = async () => {
@@ -60,6 +63,8 @@ const Login: React.FC = () => {
         setErrorMessage('Cpf ou senha inválidos');
         return;
       }
+      
+      setLoading(false);
       
       Storage.set({ key: 'usuario_id', value: data.id });
       Storage.set({ key: 'usuario_nome', value: data.nome });

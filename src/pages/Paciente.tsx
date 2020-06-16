@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon } from '@ionic/react';
+import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon, IonSpinner } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
-import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp } from '../config/firebase';
-import { checkmarkSharp } from 'ionicons/icons';
+import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp, buscaPacientePorId, timestampToDate } from '../config/firebase';
+import { checkmarkSharp, cogSharp } from 'ionicons/icons';
 import { getKeyNovoPaciente } from './../config/firebase';
+import { formatCpf } from '../config/utils';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -19,10 +20,11 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   const [endereco, setEndereco] = useState<string>('');
   const [cep, setCep] = useState<string>('');
   const [nascimento, setNascimento] = useState<string>('');
-  const [grupo, setGrupo] = useState<{ codigo: string, descricao: string }>();
-  const [fisioResp, setFisioResp] = useState();
+  const [grupo, setGrupo] = useState<string>();
+  const [fisioResp, setFisioResp] = useState<{ codigo: string, nome: string }>();
   const [carregandoGrupo, setCarregandoGrupo] = useState<boolean>(false);
   const [carregandoFisio, setCarregandoFisio] = useState<boolean>(false);
+  const [carregandoPaciente, setCarregandoPaciente] = useState<boolean>(false);
   const [gruposPacientes, setGruposPacientes] = useState<Array<{ codigo: string, descricao: string }>>([]);
   const [listaFisio, setListaFisio] = useState<Array<{ codigo: string, nome: string }>>([]);
   const [idAnterior, setIdAnterior] = useState<string>('');
@@ -34,7 +36,22 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   if (!idAnterior || idAnterior !== id) {
     
     if (!novoCadastro) {
-      // carrega dados
+      setCarregandoPaciente(true);
+      buscaPacientePorId(id).then((resp: any) => {
+        
+        setNome(resp.nome);
+        setEmail(resp.email);
+        setNascimento(timestampToDate(resp.nascimento).toString())
+        setSexo(resp.sexo);
+        setCpf(formatCpf(resp.cpf));
+        setEndereco(resp.endereco);
+        setCep(resp.cep);
+        setGrupo(resp.grupo);
+        setFisioResp(resp.responsavel);
+        
+        setCarregandoPaciente(false);
+        
+      })
     }
     
     setIdAnterior(id);
@@ -91,24 +108,6 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
     setCpf(formatCpf(e.detail.value!.trim()));
   }
   
-  function formatCpf(cpf: string) {
-    
-    cpf = cpf.replace(/[^\d]/g, "");
-    
-    if (cpf.length >= 3) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 6) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 9) {
-      cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    }
-    
-    return cpf;
-    
-  }
-  
   const cadastrar = () => {
     
     setGravando(true);
@@ -123,15 +122,13 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
       cpf: cpf.replace(/[^\d]/g, ""),
       endereco,
       cep,
-      grupo: grupo!.codigo,
-      responsavel: (fisioResp as any).codigo
+      grupo: grupo,
+      responsavel: fisioResp
     };
     
     cadastrarPaciente(key, data).then(response => {
-      
       setGravando(false);
       props.history.push('/pacientes/lista');
-      
     })
     
   }
@@ -148,12 +145,18 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
     
     <IonContent className="ion-padding">
       
-      <IonList>
+      {carregandoPaciente && <IonRow>
+        <IonCol className="ion-text-center">
+          <IonSpinner></IonSpinner>
+        </IonCol>  
+      </IonRow>}
+      
+      {!carregandoPaciente && <IonList>
         
         <IonListHeader color="secundary">
           Dados Pessoais
         </IonListHeader>
-          
+        
         <IonItem>
           <IonLabel position="floating">Nome</IonLabel>
           <IonInput value={nome} onIonChange={e => setNome(e.detail.value!)} disabled={gravando}></IonInput>
@@ -196,7 +199,7 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
           <IonLabel position="floating">Grupo</IonLabel>
           <IonSelect value={grupo} onIonChange={e => setGrupo(e.detail.value!)} disabled={gravando || carregandoGrupo}>
             {gruposPacientes.map((grupo, key) => 
-              <IonSelectOption key={key} value={grupo}>{ grupo.descricao }</IonSelectOption>
+              <IonSelectOption key={key} value={grupo.codigo}>{ grupo.descricao }</IonSelectOption>
             )}
           </IonSelect>
         </IonItem>
@@ -205,21 +208,21 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
           <IonLabel position="floating">Fisioterapeuta Responsável</IonLabel>
           <IonSelect value={fisioResp} onIonChange={e => setFisioResp(e.detail.value!)} disabled={gravando || carregandoFisio}>
             {listaFisio.map((fisio, key) => 
-              <IonSelectOption key={key} value={grupo}>{ fisio.nome }</IonSelectOption>
+              <IonSelectOption key={key} value={fisio.codigo}>{ fisio.nome }</IonSelectOption>
             )}
           </IonSelect>
         </IonItem>
         
-      </IonList>
+      </IonList>}
       
-      <IonRow>
+      {!carregandoPaciente && <IonRow>
         <IonCol className="ion-text-right">
           <IonButton color="success" onClick={cadastrar}>
             <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
             Salvar
           </IonButton>
         </IonCol>
-      </IonRow>
+      </IonRow>}
       
     </IonContent>
     

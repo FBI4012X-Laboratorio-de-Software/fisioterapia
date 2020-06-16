@@ -3,6 +3,7 @@ import { IonPage, IonHeader, IonToolbar, IonTitle, IonIcon, IonButtons, useIonVi
 import { arrowBack } from 'ionicons/icons';
 import { useHistory } from 'react-router';
 import { getUserFromAuthBase, alteraUsuario } from '../config/firebase';
+import { formatCpf } from '../config/utils';
 
 const TrocarSenha: React.FC = () => {
   
@@ -31,24 +32,6 @@ const TrocarSenha: React.FC = () => {
   
   const alteraCpf = (e: any) => {
     setCpf(formatCpf(e.detail.value!.trim()));
-  }
-  
-  function formatCpf(cpf: string) {
-    
-    cpf = cpf.replace(/[^\d]/g, "");
-    
-    if (cpf.length >= 3) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 6) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 9) {
-      cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    }
-    
-    return cpf;
-    
   }
   
   const validaCpf = () => {

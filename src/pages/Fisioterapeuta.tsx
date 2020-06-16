@@ -4,6 +4,7 @@ import { RouteComponentProps } from 'react-router';
 import { checkmarkSharp, at } from 'ionicons/icons';
 import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
+import { formatCpf } from '../config/utils';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -237,24 +238,6 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   const changeCpf = (e: any) => {
     
     setCpf(formatCpf(e.detail.value!.trim()));
-    
-  }
-  
-  function formatCpf(cpf: string) {
-    
-    cpf = cpf.replace(/[^\d]/g, "");
-    
-    if (cpf.length >= 3) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 6) {
-      cpf = cpf.replace(/(\d{3})(\d)/, "$1.$2");
-    }
-    if (cpf.length >= 9) {
-      cpf = cpf.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    }
-    
-    return cpf;
     
   }
   
