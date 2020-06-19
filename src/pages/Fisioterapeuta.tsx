@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router';
 import { checkmarkSharp, at } from 'ionicons/icons';
 import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
-import { formatCpf } from '../config/utils';
+import { formatCpf, validaEmail, validaCpf } from '../config/utils';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -99,50 +99,6 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     
   }, [nome, email, nascimento, cpf, endereco, cep])
   
-  function validaCpf(strCPF: string) {
-    
-    strCPF = strCPF.replace(/[^\d]/g, "");;
-    
-    let soma = 0;
-    let resto = 0;
-    
-    if (strCPF === "00000000000") return false;
-     
-    for (let i=  1; i<=9; i++) soma = soma + parseInt(strCPF.substring(i-1, i)) * (11 - i);
-    resto = (soma * 10) % 11;
-   
-    if ((resto === 10) || (resto === 11))  resto = 0;
-    if (resto !== parseInt(strCPF.substring(9, 10)) ) return false;
-   
-    soma = 0;
-    for (let i = 1; i <= 10; i++) soma = soma + parseInt(strCPF.substring(i-1, i)) * (12 - i);
-    resto = (soma * 10) % 11;
-   
-    if ((resto === 10) || (resto === 11))  resto = 0;
-    if (resto !== parseInt(strCPF.substring(10, 11) ) ) return false;
-    return true;
-  }
-  
-  function validaEmail(email: string) {
-    
-    let usuario = email.substring(0, email.indexOf("@"));
-    let dominio = email.substring(email.indexOf("@")+ 1, email.length);
-     
-    if ((usuario.length >=1) &&
-        (dominio.length >=3) && 
-        (usuario.search("@")===-1) && 
-        (dominio.search("@")===-1) &&
-        (usuario.search(" ")===-1) && 
-        (dominio.search(" ")===-1) &&
-        (dominio.search(".")!==-1) &&      
-        (dominio.indexOf(".") >=1)&& 
-        (dominio.lastIndexOf(".") < dominio.length - 1)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-  
   function carregaFisioterapeuta() {
     
     setCarregando(true);
@@ -173,72 +129,68 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   
   const cadastrar = () => {
     
-    setGravando(true);
-    
-    buscaFisioterapeutaPorEmail(email).then((data: any) => {
+    getUserFromAuthBase(cpf.replace(/[^\d]/g, "")).then(resp => {
       
-      let jaCad = true;
-      
-      if (data.val() === null) {
-        jaCad = false;
-      } else {
-        
-        const keys = Object.keys(data.val());
-        
-        if (keys[0] === id) {
-          jaCad = false;
-        }
-        
-      }
-      
-      if (!jaCad) {
-        
-        const fisioterapeuta = {
-          nome: nome,
-          email: email,
-          sexo: sexo,
-          cpf: cpf.replace(/[^\d]/g, ""),
-          endereco: endereco,
-          cep: cep,
-          ativo: ativo,
-          dataNascimento: new Date(nascimento)
-        };
-        
-        let key = '';
-        if (!novoCadastro) {
-          key = id;
+      if (resp !== null) {
+        if (novoCadastro) {
+          setErro('Cpf ja cadastrado em outro usuário!')
+          return;
         } else {
-          key = getKeyNovoFisioterapeuta();
-        }
-        
-        cadastrarFisioterapeuta(key, fisioterapeuta).then(() => {
-          
-          if (id) {
-            deleteUserFromAuthBase(fisioterapeuta.cpf);
+          if (resp.id !== id) {
+            setErro('Cpf ja cadastrado em outro usuário!')
+            return;
           }
-          
-          addUserToAuthBase(fisioterapeuta.cpf, email, '', key, nome, 'F', true).then(() => {
-            
-            setCarregando(false);
-            setGravando(false);
-            props.history.push('/fisioterapeutas/lista');
-            
-          })
-          
-        });
-        
-      } else {
-        setErro('Este e-mail já está cadastrado para outro fisioterapeuta!');
+        }
       }
       
-    })
+      cadastraFisio();
+      
+    });
+    
+    function cadastraFisio() {
+      
+      setGravando(true);
+      
+      const fisioterapeuta = {
+        nome: nome,
+        email: email,
+        sexo: sexo,
+        cpf: cpf.replace(/[^\d]/g, ""),
+        endereco: endereco,
+        cep: cep,
+        ativo: ativo,
+        dataNascimento: new Date(nascimento)
+      };
+      
+      let key = '';
+      if (!novoCadastro) {
+        key = id;
+      } else {
+        key = getKeyNovoFisioterapeuta();
+      }
+      
+      cadastrarFisioterapeuta(key, fisioterapeuta).then(() => {
+          
+        if (id) {
+          deleteUserFromAuthBase(fisioterapeuta.cpf);
+        }
+        
+        addUserToAuthBase(fisioterapeuta.cpf, email, '', key, nome, 'F', true).then(() => {
+          
+          setCarregando(false);
+          setGravando(false);
+          props.history.push('/fisioterapeutas/lista');
+          
+        })
+        
+      });
+      
+    }
     
   };
   
   const changeCpf = (e: any) => {
-    
     setCpf(formatCpf(e.detail.value!.trim()));
-    
   }
   
   const checkAtivo = (e: any) => {

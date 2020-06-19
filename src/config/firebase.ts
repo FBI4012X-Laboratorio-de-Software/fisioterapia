@@ -15,8 +15,6 @@ const config = {
 firebase.initializeApp(config);
 firebase.analytics();
 
-
-
 export function timestampToDate(data: any) {
   
   const time = new firebase.firestore.Timestamp(data.seconds, data.nanoseconds);
@@ -193,12 +191,16 @@ export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario
 }
 
 export function getUserFromAuthBase(cpf: string){
-  return new Promise<Usuario>((resolve, reject) => {
+  return new Promise<Usuario | null>((resolve, reject) => {
     
     const ref = firebase.database().ref('users/' + cpf);
     
     ref.once('value', snapshot => {
       const usu = snapshot.val();
+      if (usu === null) {
+        resolve(null);
+        return;
+      }
       resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
     });
     
@@ -285,8 +287,9 @@ export function getUltimosPacientesCadastrados(limit: number | null) {
       const paciente = snapshot.val();
       const retorno = [];
       
-      if (snapshot === null) {
-        resolve(null);
+      if (!paciente) {
+        resolve([]);
+        return;
       }
       
       const keys = Object.keys(paciente);
@@ -316,6 +319,33 @@ export function buscaPacientePorId(id: string) {
   return new Promise((resolve, reject) => {
     
     const ref = firebase.database().ref('pacientes/' + id);
+    
+    ref.once('value', (snapshot) => {
+      resolve(snapshot.val());
+    })
+    
+  });
+}
+
+export function deletePacientePorId(id: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('pacientes/' + id);
+        
+    ref.remove().then(function() {
+      resolve(true);
+    })
+    .catch(function(error) {
+      reject(error.message)
+    });
+    
+  });
+}
+
+export function buscaPacientesDoFisioterapeuta(idFisio: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('pacientes').orderByChild('responsavel').equalTo(idFisio);
     
     ref.once('value', (snapshot) => {
       resolve(snapshot.val());

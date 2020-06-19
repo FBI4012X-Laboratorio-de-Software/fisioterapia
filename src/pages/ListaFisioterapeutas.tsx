@@ -1,7 +1,7 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonFab, IonFabButton, IonIcon, IonList, IonItem, IonLabel, IonRow, IonCol, IonSpinner, useIonViewWillEnter, IonRefresher, IonRefresherContent, IonItemSliding, IonItemOption, IonItemOptions, IonAlert, IonButton, IonInput } from '@ionic/react';
 import React, { useState } from 'react';
 import { add, closeOutline, searchOutline, arrowBack } from 'ionicons/icons';
-import { getUltimosFisioterapeutasCadastrados, deleteFisioterapeutaPorId } from '../config/firebase';
+import { getUltimosFisioterapeutasCadastrados, deleteFisioterapeutaPorId, buscaPacientesDoFisioterapeuta } from '../config/firebase';
 import { deleteUserFromAuthBase } from './../config/firebase';
 
 const ListaFisioterapeutas: React.FC = (props: any) => {
@@ -16,6 +16,7 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
   const [fisioExcluir, setFisioExcluir] = useState<{ key: string, nome: string, cpf: string } | null>(null);
   const [mostraPesquisa, setMostraPesquisa] = useState<boolean>(false);
   const [filtro, setFiltro] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   const carregaDados = () => {
     setCarregando(true);
@@ -74,16 +75,25 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
   
   const excluirFisioterapeuta = () => {
     
-    deleteFisioterapeutaPorId(fisioExcluir!.key).then(() => {
-      deleteUserFromAuthBase(fisioExcluir!.cpf.replace(/[^\d]/g, "")).then(() => {
-        
-        setCarregando(true);
-        getUltimosFisioterapeutasCadastrados(null).then(e => gotData(e)).finally(() => {
-          setCarregaPrimeira(false);
-        })
-        
+    buscaPacientesDoFisioterapeuta(fisioExcluir!.key).then(resp => {
+      
+      if (resp !== null) {
+        setErrorMessage('Este fisioterapeuta está vinculado a um ou mais pacientes. Para desativa-lo, modifique o fisioterapeuta!');
+        return;
+      }
+      
+      deleteFisioterapeutaPorId(fisioExcluir!.key).then(() => {
+        deleteUserFromAuthBase(fisioExcluir!.cpf.replace(/[^\d]/g, "")).then(() => {
+          
+          setCarregando(true);
+          getUltimosFisioterapeutasCadastrados(null).then(e => gotData(e)).finally(() => {
+            setCarregaPrimeira(false);
+          })
+          
+        });
       });
-    });
+      
+    })
     
   }
   
@@ -132,6 +142,8 @@ const ListaFisioterapeutas: React.FC = (props: any) => {
             }
           ]}
         />
+      
+      <IonAlert isOpen={!!errorMessage} message={errorMessage} backdropDismiss={false} buttons={[ { text: 'Ok', handler: () => setErrorMessage('') } ]}></IonAlert>
       
       <IonHeader>
         <IonToolbar>

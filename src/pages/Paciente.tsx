@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon, IonSpinner } from '@ionic/react';
+import React, { useState, useEffect } from 'react';
+import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon, IonSpinner, IonToast } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
-import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp, buscaPacientePorId, timestampToDate } from '../config/firebase';
+import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp, buscaPacientePorId, timestampToDate, getUserFromAuthBase, deleteUserFromAuthBase } from '../config/firebase';
 import { checkmarkSharp, cogSharp } from 'ionicons/icons';
-import { getKeyNovoPaciente } from './../config/firebase';
-import { formatCpf } from '../config/utils';
+import { getKeyNovoPaciente, addUserToAuthBase } from './../config/firebase';
+import { formatCpf, validaEmail, validaCpf } from '../config/utils';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -28,7 +28,9 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   const [gruposPacientes, setGruposPacientes] = useState<Array<{ codigo: string, descricao: string }>>([]);
   const [listaFisio, setListaFisio] = useState<Array<{ codigo: string, nome: string }>>([]);
   const [idAnterior, setIdAnterior] = useState<string>('');
-  
+  const [erroCadastro, setErroCadastro] = useState<string>('');
+  const [erro, setErro] = useState<string>('');
+
   let novoCadastro = props.match.params.id === 'novo';
   const routeName = novoCadastro ? 'Novo paciente' : 'Editar paciente';
   const id = props.match.params.id;
@@ -62,6 +64,57 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
     carregaGrupos();
     carregaFisioterapeutas();
   });
+  
+  useEffect(function() {
+    
+    if (!nome) {
+      setErroCadastro('Nome deve ser preenchido!');
+      return;
+    }
+    
+    if (!email) {
+      setErroCadastro('E-mail deve ser preenchido!');
+      return
+    } else {
+      if (!validaEmail(email)) {
+        setErroCadastro('E-mail invalido!');
+        return;
+      }
+    }
+    
+    if (!nascimento) {
+      setErroCadastro('Data de nascimento invalida!');
+      return;
+    }
+    
+    if (!cpf || !validaCpf(cpf)) {
+      setErroCadastro('CPF invalido!');
+      return;
+    }
+    
+    if (!endereco) {
+      setErroCadastro('Endereço deve ser preenchido!');
+      return;
+    }
+    
+    if (!cep) {
+      setErroCadastro('CEP deve ser informado!');
+      return;
+    }
+    
+    if (!grupo) {
+      setErroCadastro('Grupo deve ser informado!');
+      return;
+    }
+    
+    if (!fisioResp) {
+      setErroCadastro('Fisioterapeuta responsável deve ser informado!');
+      return;
+    }
+    
+    setErroCadastro('');
+    
+  }, [nome, email, nascimento, cpf, endereco, cep, grupo, fisioResp])
   
   function carregaGrupos() {
     
@@ -110,26 +163,56 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   
   const cadastrar = () => {
     
-    setGravando(true);
+    getUserFromAuthBase(cpf.replace(/[^\d]/g, "")).then(resp => {
+      
+      if (resp !== null) {
+        if (novoCadastro) {
+          setErro('Cpf ja cadastrado em outro usuário!')
+          return;
+        } else {
+          if (resp.id !== id) {
+            setErro('Cpf ja cadastrado em outro usuário!')
+            return;
+          }
+        }
+      }
+      
+      setGravando(true);
     
-    const key = novoCadastro ? getKeyNovoPaciente() : id;
-    
-    const data = {
-      nome,
-      email,
-      nascimento: dateToTimestamp(new Date(nascimento)),
-      sexo,
-      cpf: cpf.replace(/[^\d]/g, ""),
-      endereco,
-      cep,
-      grupo: grupo,
-      responsavel: fisioResp
-    };
-    
-    cadastrarPaciente(key, data).then(response => {
-      setGravando(false);
-      props.history.push('/pacientes/lista');
-    })
+      const key = novoCadastro ? getKeyNovoPaciente() : id;
+      
+      const cpfStr = cpf.replace(/[^\d]/g, "");
+      
+      const data = {
+        nome,
+        email,
+        nascimento: dateToTimestamp(new Date(nascimento)),
+        sexo,
+        cpf: cpfStr,
+        endereco,
+        cep,
+        grupo: grupo,
+        responsavel: fisioResp
+      };
+      
+      cadastrarPaciente(key, data).then(response => {
+        setGravando(false);
+        
+        if (novoCadastro) {
+          addUserToAuthBase(cpfStr, email, '', key, nome, 'P', true).then(resp => {
+            props.history.push('/pacientes/lista');
+          })
+        } else {
+          deleteUserFromAuthBase(cpfStr).then(resp => {
+            addUserToAuthBase(cpfStr, email, '', key, nome, 'P', true).then(resp => {
+              props.history.push('/pacientes/lista');
+            })
+          })
+        }
+        
+      })
+      
+    });
     
   }
   
@@ -151,6 +234,8 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
         </IonCol>  
       </IonRow>}
       
+      <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
+        
       {!carregandoPaciente && <IonList>
         
         <IonListHeader color="secundary">
@@ -217,7 +302,7 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
       
       {!carregandoPaciente && <IonRow>
         <IonCol className="ion-text-right">
-          <IonButton color="success" onClick={cadastrar}>
+          <IonButton color="success" onClick={cadastrar} disabled={!!erroCadastro} >
             <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
             Salvar
           </IonButton>

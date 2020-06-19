@@ -42,7 +42,7 @@ const appPages: AppPage[] = [
   },
   {
     title: 'Avaliações',
-    url: '/avaliacaoes/novo',
+    url: '/avaliacoes/',
     icone: documentTextOutline,
     permissao: 'F'
   },
