@@ -29,6 +29,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   const [gravando, setGravando] = useState<boolean>(false);
   const [erroCadastro, setErroCadastro] = useState<string>('');
   const [idAnterior, setIdAnterior] = useState<string>('');
+  const [crefito, setCrefito] = useState<string>();
   
   if (!idAnterior || idAnterior !== id) {
     
@@ -44,7 +45,8 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     setNascimento('');
     setEndereco('');
     setAtivo(true);
-    
+    setCrefito('');
+
     if (!novoCadastro) {
       carregaFisioterapeuta();
     }
@@ -90,6 +92,11 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       return;
     }
     
+    if (!crefito) {
+      setErroCadastro('Crefito deve ser informado!');
+      return;
+    }
+    
     // if (!senha) {
     //   setErroCadastro('Senha deve ser informada!');
     //   return;
@@ -97,7 +104,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
     
     setErroCadastro('');
     
-  }, [nome, email, nascimento, cpf, endereco, cep])
+  }, [nome, email, nascimento, cpf, endereco, cep, crefito])
   
   function carregaFisioterapeuta() {
     
@@ -111,6 +118,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       setEndereco(fisio.endereco);
       setNome(fisio.nome);
       setSexo(fisio.sexo);
+      setCrefito(fisio.crefito);
       setNascimento(timestampToDate(fisio.dataNascimento).toString());
       
       getUserFromAuthBase(fisio.cpf).then((resp: any) => {
@@ -159,6 +167,7 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
         endereco: endereco,
         cep: cep,
         ativo: ativo,
+        crefito: crefito,
         dataNascimento: new Date(nascimento)
       };
       
@@ -250,6 +259,11 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           <IonItem>
             <IonLabel position="floating">CPF</IonLabel>
             <IonInput value={cpf} onIonChange={changeCpf} disabled={gravando} maxlength={14}></IonInput>
+          </IonItem>
+          
+          <IonItem>
+            <IonLabel position="floating">Crefito</IonLabel>
+            <IonInput value={crefito} onIonChange={e => setCrefito(e.detail.value!)} disabled={gravando} maxlength={30}></IonInput>
           </IonItem>
           
           <IonItem>
