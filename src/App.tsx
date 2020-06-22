@@ -32,6 +32,7 @@ import ListaPacientes from './pages/ListaPacientes';
 import Paciente from './pages/Paciente';
 import TrocarSenha from './pages/TrocarSenha';
 import Avaliacao from './pages/Avaliacao';
+import CadastrarAvaliacao from './pages/CadastrarAvaliacao';
 
 const { Storage } = Plugins;
 
@@ -78,7 +79,8 @@ const App: React.FC = (props) => {
           <Route path="/sobre" component={Sobre} />
           <Route path="/pacientes/lista" component={ListaPacientes} />
           <Route path="/paciente/:id" component={Paciente} />
-          <Route path="/avaliacoes" component={Avaliacao} />
+          <Route path="/avaliacoes" component={Avaliacao} exact />
+          <Route path="/avaliacao/:idpaciente" component={CadastrarAvaliacao} />
           <Redirect from="/" to="/avaliacoes/" exact />
         </IonRouterOutlet>
       </IonSplitPane>

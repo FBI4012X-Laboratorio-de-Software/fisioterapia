@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonListHeader } from '@ionic/react';
-import { RouteComponentProps } from 'react-router';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonListHeader, IonFab, IonFabButton, IonIcon, IonGrid } from '@ionic/react';
+import { RouteComponentProps, useHistory } from 'react-router';
 import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente } from '../config/firebase';
+import { add } from 'ionicons/icons';
+import { formatCpf } from './../config/utils';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   idPaciente?: string;
@@ -11,6 +13,7 @@ interface FisioterapeutaProps extends RouteComponentProps<{
 interface paciente {
   nome: string;
   codigo: string;
+  cpf: string;
 }
 
 const Avaliacao: React.FC<FisioterapeutaProps> = props => {
@@ -41,7 +44,7 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
         
         const novaLista = [];
         for (const pac of resp) {
-          novaLista.push({ codigo: pac.codigo, nome: pac.nome });
+          novaLista.push({ codigo: pac.codigo, nome: pac.nome, cpf: pac.cpf });
         }
         setListaPacientes(novaLista);
         
@@ -92,7 +95,7 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
       </IonHeader>
       <IonContent className="ion-padding">
         
-        <IonModal isOpen={showModalSelecPaciente} cssClass='my-custom-class'>
+        <IonModal isOpen={showModalSelecPaciente}>
           <IonHeader>
             <IonToolbar>
               <IonTitle>Pacientes</IonTitle>
@@ -134,28 +137,59 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
         </IonModal>
         
         {paciente && <IonList>
-          <IonItem className="ion-no-border">
-            { paciente.nome }
+          <IonItem className="ion-no-border" onClick={() => { setShowModalSelecPaciente(true); carregaPacientes() } }>
+            <IonGrid>
+              <IonRow>
+                <IonCol>
+                { paciente.nome }
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol>
+                  {formatCpf(paciente.cpf) }
+                </IonCol>
+              </IonRow>
+            </IonGrid>
           </IonItem>
         </IonList>}
         
-        <IonRow>
-          <IonCol className="ion-text-center">
+        <IonRow className="ion-margin-bottom">
+          {!paciente && <IonCol className="ion-text-center">
             <IonButton color="primary" onClick={() => { setShowModalSelecPaciente(true); carregaPacientes() } } disabled={carregandoAvaliacoes}>
-              {paciente ? 'Alterar paciente' : 'Selecionar paciente'}
+              Selecionar paciente
             </IonButton>
-          </IonCol>
+          </IonCol>}
+          {paciente && <IonCol className="ion-text-right">
+            <IonButton color="warning" onClick={() => { setShowModalSelecPaciente(true); carregaPacientes()  } } disabled={carregandoAvaliacoes}>
+              Alterar
+            </IonButton>
+          </IonCol>}
         </IonRow>
         
-        {paciente && !carregandoAvaliacoes && <IonList>
+        {paciente && <div>
           
-        </IonList>}
-        
-        {carregandoAvaliacoes && <IonRow>
-          <IonCol className="ion-text-center ion-margin-top">
-            <IonSpinner></IonSpinner>
-          </IonCol>  
-        </IonRow>}
+          {!carregandoAvaliacoes && listaAvaliacoes.length > 0 && <IonList>
+          
+          </IonList>}
+          {!carregandoAvaliacoes && listaAvaliacoes.length === 0 && <IonRow>
+            <IonCol className="ion-text-center">
+              Ainda não há avaliações cadastradas!
+            </IonCol>
+          </IonRow>}
+            
+          {carregandoAvaliacoes && <IonRow>
+            <IonCol className="ion-text-center ion-margin-top">
+              <IonSpinner></IonSpinner>
+            </IonCol>  
+          </IonRow>}
+          
+          {!carregandoAvaliacoes && <IonFab vertical="bottom" horizontal="end" slot="fixed">
+            <IonFabButton onClick={() => props.history.push('/avaliacao/' + paciente.codigo)}>
+              <IonIcon icon={add} />
+            </IonFabButton>
+          </IonFab>}
+          
+        </div>}
         
       </IonContent>
     </IonPage>
