@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { IonPage, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonList, IonItem, IonLabel, IonInput, IonDatetime, IonContent, IonSelect, IonSelectOption, IonListHeader, useIonViewDidEnter, IonRow, IonCol, IonButton, IonIcon, IonSpinner, IonToast } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
 import { buscaGruposPacientes, getUltimosFisioterapeutasCadastrados, cadastrarPaciente, dateToTimestamp, buscaPacientePorId, timestampToDate, getUserFromAuthBase, deleteUserFromAuthBase } from '../config/firebase';
-import { checkmarkSharp, cogSharp } from 'ionicons/icons';
+import { checkmarkSharp } from 'ionicons/icons';
 import { getKeyNovoPaciente, addUserToAuthBase } from './../config/firebase';
 import { formatCpf, validaEmail, validaCpf } from '../config/utils';
 
@@ -25,8 +25,8 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
   const [carregandoGrupo, setCarregandoGrupo] = useState<boolean>(false);
   const [carregandoFisio, setCarregandoFisio] = useState<boolean>(false);
   const [carregandoPaciente, setCarregandoPaciente] = useState<boolean>(false);
-  const [gruposPacientes, setGruposPacientes] = useState<Array<{ codigo: string, descricao: string }>>([]);
-  const [listaFisio, setListaFisio] = useState<Array<{ codigo: string, nome: string }>>([]);
+  const [gruposPacientes] = useState<Array<{ codigo: string, descricao: string }>>([]);
+  const [listaFisio] = useState<Array<{ codigo: string, nome: string }>>([]);
   const [idAnterior, setIdAnterior] = useState<string>('');
   const [erroCadastro, setErroCadastro] = useState<string>('');
   const [erro, setErro] = useState<string>('');

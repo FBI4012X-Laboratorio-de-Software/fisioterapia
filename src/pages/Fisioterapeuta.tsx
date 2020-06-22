@@ -1,8 +1,8 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonIcon, IonToast, IonList, IonListHeader, IonItem, IonLabel, IonInput, IonDatetime, IonSelect, IonSelectOption, IonToggle, IonRow, IonCol, IonButton, IonSpinner } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router';
-import { checkmarkSharp, at } from 'ionicons/icons';
-import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorEmail, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
+import { checkmarkSharp } from 'ionicons/icons';
+import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
 import { formatCpf, validaEmail, validaCpf } from '../config/utils';
 

@@ -16,7 +16,6 @@ import { useLocation, useHistory } from 'react-router-dom';
 import { people, personOutline, documentTextOutline, ribbonOutline } from 'ionicons/icons';
 import './Menu.css';
 import { Plugins } from '@capacitor/core';
-import { app } from 'firebase';
 
 const { Storage } = Plugins;
 

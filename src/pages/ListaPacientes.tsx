@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonPage, IonFab, IonFabButton, IonIcon, useIonViewWillEnter, IonList, IonItemSliding, IonItem, IonLabel, IonItemOptions, IonItemOption, IonRefresher, IonRefresherContent, IonButton, IonInput, IonAlert, IonRow, IonCol, IonSpinner } from '@ionic/react';
-import { add, closeOutline, searchOutline, arrowBack, book } from 'ionicons/icons';
-import { getUltimosPacientesCadastrados, buscaPacientesDoFisioterapeuta } from '../config/firebase';
+import { add, closeOutline, searchOutline, arrowBack } from 'ionicons/icons';
+import { getUltimosPacientesCadastrados } from '../config/firebase';
 import { formatCpf } from './../config/utils';
 import { deletePacientePorId } from './../config/firebase';
 
