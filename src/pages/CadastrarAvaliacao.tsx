@@ -1,10 +1,10 @@
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel, IonDatetime } from '@ionic/react';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import { useState } from 'react';
 import { camera, checkmarkSharp } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
-import { getKeyFromKeysBase } from '../config/firebase';
+import { localeVars } from './../config/localeVars';
 
 interface CadastrarAvaliacaoParams extends RouteComponentProps<{
   idPaciente: string;
@@ -22,6 +22,7 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const [tituloModalFoto, setTituloModalFoto] = useState<string>('');
   const [fotoMostra, setFotoMostra] = useState<Photo | null>(null);
   const [observacoes, setObservacoes] = useState<string>('');
+  const [dataAvaliação, setDataAvaliacao] = useState<string>('');
   
   const routeName = 'Cadastrar avaliação'
   const { takePhoto } = usePhotoGallery();
@@ -36,6 +37,7 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     setFotoEsquerda(null)
     setFotoDireita(null);
     setObservacoes('');
+    setDataAvaliacao((new Date()).toString());
     
     if (idAvaliacao) {
       // carrega avaliação
@@ -80,6 +82,11 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const cadastrar = () => {
     
   }
+  
+  const monthNames = localeVars.monthNames;
+  const monthShortNames = localeVars.monthShortNames
+  const dayNames = localeVars.dayNames
+  const dayShortNames = localeVars.dayShortNames
   
   return (
     <IonPage>
@@ -127,7 +134,13 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
         
         <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
         
-        <IonRow>
+        <IonItem>
+          <IonLabel position="floating">Data de Nascimento</IonLabel>
+          <IonDatetime value={dataAvaliação} onIonChange={e => setDataAvaliacao(e.detail!.value!)} displayFormat="DD/MM/YYYY" doneText="Pronto" cancelText="Cancelar"
+              monthNames={monthNames} monthShortNames={monthShortNames} dayNames={dayNames} dayShortNames={dayShortNames} />
+        </IonItem>
+        
+        <IonRow className="ion-margin-top">
           <IonCol>
             {fotoFrontal && <IonImg src={fotoFrontal.webviewPath} onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
             {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >

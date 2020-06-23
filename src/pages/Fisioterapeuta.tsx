@@ -5,6 +5,7 @@ import { checkmarkSharp } from 'ionicons/icons';
 import { getKeyNovoFisioterapeuta, cadastrarFisioterapeuta, buscaFisioterapeutaPorId, timestampToDate, getUserFromAuthBase } from '../config/firebase';
 import { addUserToAuthBase, deleteUserFromAuthBase } from './../config/firebase';
 import { formatCpf, validaEmail, validaCpf } from '../config/utils';
+import { localeVars } from '../config/localeVars';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   id: string;
@@ -30,6 +31,11 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
   const [erroCadastro, setErroCadastro] = useState<string>('');
   const [idAnterior, setIdAnterior] = useState<string>('');
   const [crefito, setCrefito] = useState<string>();
+  
+  const monthNames = localeVars.monthNames;
+  const monthShortNames = localeVars.monthShortNames
+  const dayNames = localeVars.dayNames
+  const dayShortNames = localeVars.dayShortNames
   
   if (!idAnterior || idAnterior !== id) {
     
@@ -250,7 +256,8 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
           
           <IonItem>
             <IonLabel position="floating">Data de Nascimento</IonLabel>
-            <IonDatetime value={nascimento} onIonChange={e => setNascimento(e.detail!.value!)} disabled={gravando}/>
+            <IonDatetime value={nascimento} onIonChange={e => setNascimento(e.detail!.value!)} disabled={gravando} displayFormat="DD/MM/YYYY" doneText="Pronto" cancelText="Cancelar"
+              monthNames={monthNames} monthShortNames={monthShortNames} dayNames={dayNames} dayShortNames={dayShortNames}/>
           </IonItem>
           
           <IonItem>
