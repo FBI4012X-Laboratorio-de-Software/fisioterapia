@@ -27,11 +27,13 @@ export function dateToTimestamp(date: Date) {
   return firebase.firestore.Timestamp.fromDate(date);
 }
 
-export function getKeyNovoFisioterapeuta(): string {
+export function getKeyNovoFisioterapeuta(): Promise<string> {
   
-  const res = firebase.database().ref().child('fisioterapeutas').push().key;
-  
-  return res!.toString();
+  return new Promise((resolve, reject) => {
+    getKeyFromKeysBase('fisioterapeuta').then(key => {
+      resolve(key.toString());
+    })
+  });
   
 }
 
@@ -307,11 +309,13 @@ export function getUltimosPacientesCadastrados(limit: number | null) {
   });
 }
 
-export function getKeyNovoPaciente(): string {
+export function getKeyNovoPaciente(): Promise<string> {
   
-  const res = firebase.database().ref().child('pacientes').push().key;
-  
-  return res!.toString();
+  return new Promise((resolve, reject) => {
+    getKeyFromKeysBase('paciente').then(key => {
+      resolve(key.toString());
+    })
+  });
   
 }
 
@@ -362,6 +366,52 @@ export function buscaAvaliacoesDoPaciente(idPaciente: string) {
     ref.once('value', (snapshot) => {
       resolve(snapshot.val());
     })
+    
+  });
+}
+
+export function getKeyNovaAvaliacao(idPaciente: string): Promise<string> {
+  
+  return new Promise((resolve, reject) => {
+    getKeyFromKeysBase('avaliacao', idPaciente).then(key => {
+      resolve(key.toString());
+    })
+  });
+  
+}
+
+export function cadastrarAvaliacao(key: string, idPaciente: string, dados: any) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('avaliacao/' + idPaciente + '/' + key);
+    
+    ref.set(dados).then(resp => {
+      resolve(true);
+    })
+    
+  });
+}
+
+export function getKeyFromKeysBase(tipo: 'fisioterapeuta' | 'paciente' | 'avaliacao', subChave: string | null = null): Promise<number> {
+  return new Promise((resolve, reject) => {
+    
+    let path = 'keys/' + tipo;
+    if (subChave) {
+      path += '/' + subChave;
+    }
+    
+    const ref = firebase.database().ref(path);
+    
+    ref.once('value', (snapshot) => {
+      
+      const result = snapshot.val();
+      
+      const novoVal = parseInt(result ? (result + 1) : 1);
+      
+      ref.set(novoVal);
+      resolve(novoVal);
+      
+    });
     
   });
 }

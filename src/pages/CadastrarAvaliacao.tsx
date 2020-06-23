@@ -1,14 +1,89 @@
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton } from '@ionic/react';
-import { usePhotoGallery } from '../hooks/usePhotoGallery';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel } from '@ionic/react';
+import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
+import { useState } from 'react';
+import { camera, checkmarkSharp } from 'ionicons/icons';
+import { RouteComponentProps } from 'react-router';
+import { getKeyFromKeysBase } from '../config/firebase';
 
-const CadastrarAvaliacao: React.FC = () => {
+interface CadastrarAvaliacaoParams extends RouteComponentProps<{
+  idPaciente: string;
+  idAvaliacao?: string;
+}> {}
+
+const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
+  
+  const [fotoFrontal, setFotoFrontal] = useState<Photo | null>(null);
+  const [fotoCostas, setFotoCostas] = useState<Photo | null>(null);
+  const [fotoEsquerda, setFotoEsquerda] = useState<Photo | null>(null);
+  const [fotoDireita, setFotoDireita] = useState<Photo | null>(null);
+  const [erro, setErro] = useState<string>();
+  const [showModalFoto, setShowModalFoto] = useState<boolean>(false);
+  const [tituloModalFoto, setTituloModalFoto] = useState<string>('');
+  const [fotoMostra, setFotoMostra] = useState<Photo | null>(null);
+  const [observacoes, setObservacoes] = useState<string>('');
   
   const routeName = 'Cadastrar avaliação'
   const { takePhoto } = usePhotoGallery();
   
+  const idPaciente = props.match.params.idPaciente;
+  const idAvaliacao = props.match.params.idAvaliacao;
+  
+  useIonViewWillEnter(() => {
+    
+    setFotoFrontal(null)
+    setFotoCostas(null);
+    setFotoEsquerda(null)
+    setFotoDireita(null);
+    setObservacoes('');
+    
+    if (idAvaliacao) {
+      // carrega avaliação
+    }
+    
+  });
+  
+  const tirarFoto = async (funcSet: Function) => {
+    
+    const foto: any = await takePhoto();
+    
+    if (foto.erro) {
+      if (foto.erro === 'Requested device not found') {
+        setErro('Não foi encontrado uma camera neste dispositivo!');
+      }
+      return;
+    }
+    
+    funcSet({ webviewPath: foto.webPath });
+    
+  }
+  
+  const mostrarFoto = (foto: any, titulo: string) => {
+    setShowModalFoto(true);
+    setTituloModalFoto(titulo);
+    setFotoMostra(foto);
+  }
+  
+  const alterarFoto = () => {
+    if (tituloModalFoto === 'Frontal') {
+      tirarFoto(setFotoFrontal);
+    } else if (tituloModalFoto === 'Costas') {
+      tirarFoto(setFotoCostas);
+    } else if (tituloModalFoto === 'Esquerda') {
+      tirarFoto(setFotoEsquerda);
+    } else if (tituloModalFoto === 'Direita') {
+      tirarFoto(setFotoDireita);
+    }
+    setShowModalFoto(false);
+  }
+  
+  const cadastrar = () => {
+    
+  }
+  
   return (
     <IonPage>
+      
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
@@ -20,10 +95,86 @@ const CadastrarAvaliacao: React.FC = () => {
       
       <IonContent className="ion-padding">
         
-        <IonButton onClick={() => { takePhoto() }}>
-          Tirar foto
-        </IonButton>
+        <IonModal isOpen={showModalFoto}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>{ tituloModalFoto }</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => { setShowModalFoto(false) } }>
+                  Fechar
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent>
+            
+            {fotoMostra && <IonRow>
+              <IonCol>
+                <IonImg src={fotoMostra.webviewPath} />
+              </IonCol>
+            </IonRow>}
+            
+            {fotoMostra && <IonRow>
+              <IonCol>
+                <IonButton color="primary" expand="block" onClick={() => { alterarFoto() }}>
+                  Alterar imagem
+                </IonButton>
+              </IonCol>
+            </IonRow>}
+            
+          </IonContent>
+        </IonModal>
         
+        <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
+        
+        <IonRow>
+          <IonCol>
+            {fotoFrontal && <IonImg src={fotoFrontal.webviewPath} onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
+            {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >
+              Fontal
+              <IonIcon icon={camera} slot="start" />
+            </IonButton>}
+          </IonCol>
+          <IonCol>
+            {fotoCostas && <IonImg src={fotoCostas.webviewPath} onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
+            {!fotoCostas && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoCostas) } }>
+              Costas
+              <IonIcon icon={camera} slot="start" />
+            </IonButton>}
+          </IonCol>
+        </IonRow>
+        
+        <IonRow>
+          <IonCol>
+            {fotoEsquerda && <IonImg src={fotoEsquerda.webviewPath} onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
+            {!fotoEsquerda && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoEsquerda) } }>
+              Esquerda
+              <IonIcon icon={camera} slot="start" />
+            </IonButton>}
+          </IonCol>
+          <IonCol>
+            {fotoDireita && <IonImg src={fotoDireita.webviewPath} onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
+            {!fotoDireita && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoDireita) } }>
+              Direita
+              <IonIcon icon={camera} slot="start" />
+            </IonButton>}
+          </IonCol>
+        </IonRow>
+        
+        <IonItem className="ion-margin-top">
+          <IonLabel position="floating">Observações</IonLabel>
+          <IonTextarea rows={5} value={observacoes} onIonChange={e => setObservacoes(e.detail.value!)}></IonTextarea>
+        </IonItem>
+
+        <IonRow className="ion-margin-top">
+          <IonCol className="ion-text-right">
+            <IonButton color="success" onClick={cadastrar}>
+              <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
+              Salvar
+            </IonButton>
+          </IonCol>
+        </IonRow>
+                
       </IonContent>
       
     </IonPage>

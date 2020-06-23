@@ -178,41 +178,51 @@ const Paciente: React.FC<FisioterapeutaProps> = props => {
       }
       
       setGravando(true);
+      
+      if (novoCadastro) {
+        getKeyNovoPaciente().then(key => {
+          salvaPaciente(key);
+        })
+      } else {
+        salvaPaciente(id);
+      }
+      
+    });
     
-      const key = novoCadastro ? getKeyNovoPaciente() : id;
+  }
+  
+  function salvaPaciente(key: string) {
+    
+    const cpfStr = cpf.replace(/[^\d]/g, "");
       
-      const cpfStr = cpf.replace(/[^\d]/g, "");
+    const data = {
+      nome,
+      email,
+      nascimento: dateToTimestamp(new Date(nascimento)),
+      sexo,
+      cpf: cpfStr,
+      endereco,
+      cep,
+      grupo: grupo,
+      responsavel: fisioResp
+    };
+    
+    cadastrarPaciente(key, data).then(response => {
+      setGravando(false);
       
-      const data = {
-        nome,
-        email,
-        nascimento: dateToTimestamp(new Date(nascimento)),
-        sexo,
-        cpf: cpfStr,
-        endereco,
-        cep,
-        grupo: grupo,
-        responsavel: fisioResp
-      };
-      
-      cadastrarPaciente(key, data).then(response => {
-        setGravando(false);
-        
-        if (novoCadastro) {
+      if (novoCadastro) {
+        addUserToAuthBase(cpfStr, email, '', key, nome, 'P', true).then(resp => {
+          props.history.push('/pacientes/lista');
+        })
+      } else {
+        deleteUserFromAuthBase(cpfStr).then(resp => {
           addUserToAuthBase(cpfStr, email, '', key, nome, 'P', true).then(resp => {
             props.history.push('/pacientes/lista');
           })
-        } else {
-          deleteUserFromAuthBase(cpfStr).then(resp => {
-            addUserToAuthBase(cpfStr, email, '', key, nome, 'P', true).then(resp => {
-              props.history.push('/pacientes/lista');
-            })
-          })
-        }
-        
-      })
+        })
+      }
       
-    });
+    })
     
   }
   

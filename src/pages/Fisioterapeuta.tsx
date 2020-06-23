@@ -159,44 +159,49 @@ const CadastroFisioterapeuta: React.FC<FisioterapeutaProps> = (props) => {
       
       setGravando(true);
       
-      const fisioterapeuta = {
-        nome: nome,
-        email: email,
-        sexo: sexo,
-        cpf: cpf.replace(/[^\d]/g, ""),
-        endereco: endereco,
-        cep: cep,
-        ativo: ativo,
-        crefito: crefito,
-        dataNascimento: new Date(nascimento)
-      };
-      
-      let key = '';
       if (!novoCadastro) {
-        key = id;
+        salvaFisio(id);
       } else {
-        key = getKeyNovoFisioterapeuta();
-      }
-      
-      cadastrarFisioterapeuta(key, fisioterapeuta).then(() => {
-          
-        if (id) {
-          deleteUserFromAuthBase(fisioterapeuta.cpf);
-        }
-        
-        addUserToAuthBase(fisioterapeuta.cpf, email, '', key, nome, 'F', true).then(() => {
-          
-          setCarregando(false);
-          setGravando(false);
-          props.history.push('/fisioterapeutas/lista');
-          
+        getKeyNovoFisioterapeuta().then(key => {
+          salvaFisio(key);
         })
-        
-      });
+      }
       
     }
     
   };
+  
+  function salvaFisio(key: string) {
+    
+    const fisioterapeuta = {
+      nome: nome,
+      email: email,
+      sexo: sexo,
+      cpf: cpf.replace(/[^\d]/g, ""),
+      endereco: endereco,
+      cep: cep,
+      ativo: ativo,
+      crefito: crefito,
+      dataNascimento: new Date(nascimento)
+    };
+    
+    cadastrarFisioterapeuta(key, fisioterapeuta).then(() => {
+      
+      if (!novoCadastro) {
+        deleteUserFromAuthBase(fisioterapeuta.cpf);
+      }
+      
+      addUserToAuthBase(fisioterapeuta.cpf, email, '', key, nome, 'F', true).then(() => {
+        
+        setCarregando(false);
+        setGravando(false);
+        props.history.push('/fisioterapeutas/lista');
+        
+      })
+      
+    });
+  
+  }
   
   const changeCpf = (e: any) => {
     setCpf(formatCpf(e.detail.value!.trim()));

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonPage, IonFab, IonFabButton, IonIcon, useIonViewWillEnter, IonList, IonItemSliding, IonItem, IonLabel, IonItemOptions, IonItemOption, IonRefresher, IonRefresherContent, IonButton, IonInput, IonAlert, IonRow, IonCol, IonSpinner } from '@ionic/react';
 import { add, closeOutline, searchOutline, arrowBack } from 'ionicons/icons';
-import { getUltimosPacientesCadastrados } from '../config/firebase';
-import { formatCpf } from './../config/utils';
+import { getUltimosPacientesCadastrados, deleteUserFromAuthBase } from '../config/firebase';
+import { formatCpf, desformataCpf } from './../config/utils';
 import { deletePacientePorId } from './../config/firebase';
 
 const ListaPacientes: React.FC = (props : any) => {
@@ -73,7 +73,11 @@ const ListaPacientes: React.FC = (props : any) => {
     deletePacientePorId(pacienteExluir!.key).then((resp: any) => {
       
       if (resp === true) {
-        carregaDados();
+        
+        deleteUserFromAuthBase(desformataCpf(pacienteExluir!.cpf)).then(resp => {
+          carregaDados();
+        })
+        
       } else {
         setErrorMessage(resp);
       }
@@ -163,7 +167,7 @@ const ListaPacientes: React.FC = (props : any) => {
       {!carregando && dadosMostra.length > 0 && <IonList>
           { dadosMostra.map((value, key) => 
           <IonItemSliding key={key}>
-            <IonItem routerLink={'/paciente/' + value.key} routerDirection="none">
+            <IonItem onClick={() => props.history.push('/paciente/' + value.key)}>
               <IonLabel>
                 <h2>{ value.nome }</h2>
                 <p>{ value.cpf }</p>

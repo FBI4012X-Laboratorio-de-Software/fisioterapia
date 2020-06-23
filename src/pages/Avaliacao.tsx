@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonListHeader, IonFab, IonFabButton, IonIcon, IonGrid } from '@ionic/react';
-import { RouteComponentProps, useHistory } from 'react-router';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonFab, IonFabButton, IonIcon, IonGrid } from '@ionic/react';
+import { RouteComponentProps } from 'react-router';
 import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente } from '../config/firebase';
 import { add } from 'ionicons/icons';
 import { formatCpf } from './../config/utils';
@@ -31,10 +31,13 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
   useIonViewWillEnter(() => {
     setCarregandoPacientes(true);
     carregaPacientes();
-    setPaciente(null);
     setFiltroPaciente('');
     setCarregandoAvaliacoes(false);
-    setListaAvaliacoes([]);
+    
+    if (paciente) {
+      carregaAvaliacoes(paciente);
+    }
+    
   })
   
   const carregaPacientes = () => {

@@ -16,6 +16,10 @@ export function formatCpf(cpf: string) {
   return cpf;
   
 }
+
+export function desformataCpf(cpf: string) {
+  return cpf.replace(/[^\d]/g, "");
+}
   
 export function validaCpf(strCPF: string) {
     
