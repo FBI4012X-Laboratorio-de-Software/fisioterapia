@@ -80,7 +80,7 @@ const App: React.FC = (props) => {
           <Route path="/pacientes/lista" component={ListaPacientes} />
           <Route path="/paciente/:id" component={Paciente} />
           <Route path="/avaliacoes" component={Avaliacao} exact />
-          <Route path="/avaliacao/:idpaciente" component={CadastrarAvaliacao} />
+          <Route path="/avaliacao/:idpaciente" component={CadastrarAvaliacao} exact/>
           <Redirect from="/" to="/avaliacoes/" exact />
         </IonRouterOutlet>
       </IonSplitPane>

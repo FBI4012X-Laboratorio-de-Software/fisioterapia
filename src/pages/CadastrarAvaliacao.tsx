@@ -1,14 +1,15 @@
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel, IonDatetime } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput } from '@ionic/react';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import { useState } from 'react';
 import { camera, checkmarkSharp } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 import { localeVars } from './../config/localeVars';
+import { buscaPacientePorId } from '../config/firebase';
 
 interface CadastrarAvaliacaoParams extends RouteComponentProps<{
-  idPaciente: string;
-  idAvaliacao?: string;
+  idpaciente: string;
+  idavaliacao?: string;
 }> {}
 
 const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
@@ -22,15 +23,19 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const [tituloModalFoto, setTituloModalFoto] = useState<string>('');
   const [fotoMostra, setFotoMostra] = useState<Photo | null>(null);
   const [observacoes, setObservacoes] = useState<string>('');
-  const [dataAvaliação, setDataAvaliacao] = useState<string>('');
+  const [dataAvaliacao, setDataAvaliacao] = useState<string>('');
+  const [nomePaciente, setNomePaciente] = useState<string>('');
+  const [idAnter, setIdAnter] = useState<string>('');
+  const [carregandoPaciente, setCarregandoPaciente] = useState<boolean>(false);
+  const [carregandoAvaliacao, setCarregandoAvaliacao] = useState<boolean>(false);
   
   const routeName = 'Cadastrar avaliação'
   const { takePhoto } = usePhotoGallery();
   
-  const idPaciente = props.match.params.idPaciente;
-  const idAvaliacao = props.match.params.idAvaliacao;
+  const idPaciente = props.match.params.idpaciente;
+  const idAvaliacao = props.match.params.idavaliacao;
   
-  useIonViewWillEnter(() => {
+  if (!idAnter || idAnter !== idPaciente + idAvaliacao) {
     
     setFotoFrontal(null)
     setFotoCostas(null);
@@ -38,12 +43,25 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     setFotoDireita(null);
     setObservacoes('');
     setDataAvaliacao((new Date()).toString());
+    setCarregandoPaciente(true);
     
     if (idAvaliacao) {
-      // carrega avaliação
+      
+      setCarregandoAvaliacao(true);
+      
+      
+      
     }
     
-  });
+    buscaPacientePorId(idPaciente).then((resp: any) => {
+      if (resp) {
+        setNomePaciente(resp.nome);
+      }
+      setCarregandoPaciente(false);
+    })
+    
+    setIdAnter(idPaciente + idAvaliacao);
+  }
   
   const tirarFoto = async (funcSet: Function) => {
     
@@ -87,6 +105,13 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const monthShortNames = localeVars.monthShortNames
   const dayNames = localeVars.dayNames
   const dayShortNames = localeVars.dayShortNames
+  
+  let dadosValidos = false;
+  if (!!dataAvaliacao && !!fotoCostas && !!fotoDireita && !!fotoEsquerda && !!fotoFrontal) {
+    dadosValidos = true;
+  }
+  
+  const carregando = carregandoAvaliacao || carregandoPaciente;
   
   return (
     <IonPage>
@@ -134,60 +159,69 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
         
         <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
         
-        <IonItem>
-          <IonLabel position="floating">Data de Nascimento</IonLabel>
-          <IonDatetime value={dataAvaliação} onIonChange={e => setDataAvaliacao(e.detail!.value!)} displayFormat="DD/MM/YYYY" doneText="Pronto" cancelText="Cancelar"
-              monthNames={monthNames} monthShortNames={monthShortNames} dayNames={dayNames} dayShortNames={dayShortNames} />
-        </IonItem>
-        
-        <IonRow className="ion-margin-top">
-          <IonCol>
-            {fotoFrontal && <IonImg src={fotoFrontal.webviewPath} onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
-            {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >
-              Fontal
-              <IonIcon icon={camera} slot="start" />
-            </IonButton>}
-          </IonCol>
-          <IonCol>
-            {fotoCostas && <IonImg src={fotoCostas.webviewPath} onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
-            {!fotoCostas && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoCostas) } }>
-              Costas
-              <IonIcon icon={camera} slot="start" />
-            </IonButton>}
-          </IonCol>
-        </IonRow>
-        
-        <IonRow>
-          <IonCol>
-            {fotoEsquerda && <IonImg src={fotoEsquerda.webviewPath} onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
-            {!fotoEsquerda && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoEsquerda) } }>
-              Esquerda
-              <IonIcon icon={camera} slot="start" />
-            </IonButton>}
-          </IonCol>
-          <IonCol>
-            {fotoDireita && <IonImg src={fotoDireita.webviewPath} onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
-            {!fotoDireita && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoDireita) } }>
-              Direita
-              <IonIcon icon={camera} slot="start" />
-            </IonButton>}
-          </IonCol>
-        </IonRow>
-        
-        <IonItem className="ion-margin-top">
-          <IonLabel position="floating">Observações</IonLabel>
-          <IonTextarea rows={5} value={observacoes} onIonChange={e => setObservacoes(e.detail.value!)}></IonTextarea>
-        </IonItem>
+        {!carregando && <div>
+          
+          <IonItem>
+            <IonLabel position="floating">Paciente</IonLabel>
+            <IonInput value={nomePaciente} disabled></IonInput>
+          </IonItem>
+          
+          <IonItem>
+            <IonLabel position="floating">Data da Avaliação</IonLabel>
+            <IonDatetime value={dataAvaliacao} onIonChange={e => setDataAvaliacao(e.detail!.value!)} displayFormat="DD/MM/YYYY" doneText="Pronto" cancelText="Cancelar"
+                monthNames={monthNames} monthShortNames={monthShortNames} dayNames={dayNames} dayShortNames={dayShortNames} />
+          </IonItem>
+          
+          <IonRow className="ion-margin-top">
+            <IonCol>
+              {fotoFrontal && <IonImg src={fotoFrontal.webviewPath} onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
+              {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >
+                Fontal
+                <IonIcon icon={camera} slot="start" />
+              </IonButton>}
+            </IonCol>
+            <IonCol>
+              {fotoCostas && <IonImg src={fotoCostas.webviewPath} onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
+              {!fotoCostas && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoCostas) } }>
+                Costas
+                <IonIcon icon={camera} slot="start" />
+              </IonButton>}
+            </IonCol>
+          </IonRow>
+          
+          <IonRow>
+            <IonCol>
+              {fotoEsquerda && <IonImg src={fotoEsquerda.webviewPath} onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
+              {!fotoEsquerda && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoEsquerda) } }>
+                Esquerda
+                <IonIcon icon={camera} slot="start" />
+              </IonButton>}
+            </IonCol>
+            <IonCol>
+              {fotoDireita && <IonImg src={fotoDireita.webviewPath} onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
+              {!fotoDireita && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoDireita) } }>
+                Direita
+                <IonIcon icon={camera} slot="start" />
+              </IonButton>}
+            </IonCol>
+          </IonRow>
+          
+          <IonItem className="ion-margin-top">
+            <IonLabel position="floating">Observações</IonLabel>
+            <IonTextarea rows={5} value={observacoes} onIonChange={e => setObservacoes(e.detail.value!)}></IonTextarea>
+          </IonItem>
 
-        <IonRow className="ion-margin-top">
-          <IonCol className="ion-text-right">
-            <IonButton color="success" onClick={cadastrar}>
-              <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
-              Salvar
-            </IonButton>
-          </IonCol>
-        </IonRow>
-                
+          <IonRow className="ion-margin-top">
+            <IonCol className="ion-text-right">
+              <IonButton color="success" onClick={cadastrar} disabled={!dadosValidos}>
+                <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>
+                Salvar
+              </IonButton>
+            </IonCol>
+          </IonRow>
+          
+        </div>}
+        
       </IonContent>
       
     </IonPage>
