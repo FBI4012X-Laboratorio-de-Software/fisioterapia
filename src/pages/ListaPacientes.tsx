@@ -129,21 +129,19 @@ const ListaPacientes: React.FC = (props : any) => {
     <IonHeader>
       <IonToolbar>
         
-        {!mostraPesquisa && <IonButtons slot="start">
-          <IonMenuButton />
-        </IonButtons>}
+        <IonButtons slot="start">
+          {!mostraPesquisa && <IonMenuButton />}
+          {mostraPesquisa && <IonButton onClick={() => { setMostraPesquisa(false); setFiltro('');} }>
+            <IonIcon slot="icon-only" icon={arrowBack} />
+          </IonButton>}
+        </IonButtons>
+        
         {!mostraPesquisa && <IonButtons slot="end">
           <IonButton onClick={() => { setMostraPesquisa(true); focaSearch(); } }>
             <IonIcon slot="icon-only" icon={searchOutline} />
           </IonButton>
         </IonButtons>}
         {!mostraPesquisa && <IonTitle>{ routeName }</IonTitle>}
-        
-        {mostraPesquisa && <IonButtons slot="start">
-          <IonButton onClick={() => { setMostraPesquisa(false); setFiltro('');} }>
-            <IonIcon slot="icon-only" icon={arrowBack} />
-          </IonButton>
-        </IonButtons>}
         
         {mostraPesquisa && 
           <IonInput ref={searchInput} placeholder="Filtrar nome ou cpf" value={filtro} onIonChange={e => setFiltro(e!.detail!.value!)}></IonInput>
