@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonIcon, IonButtons, useIonViewWillEnter, IonContent, IonList, IonItem, IonLabel, IonInput, IonButton, IonRow, IonCol, IonAlert, IonSpinner } from '@ionic/react';
 import { arrowBack } from 'ionicons/icons';
 import { useHistory } from 'react-router';
-import { getUserFromAuthBase, alteraUsuario } from '../config/firebase';
+import { getUserFromAuthBase, alterUserFromAuthBase } from '../config/firebase';
 import { formatCpf } from '../config/utils';
 
 const TrocarSenha: React.FC = () => {
@@ -93,7 +93,7 @@ const TrocarSenha: React.FC = () => {
     
     const cpfSemPontuacao = cpf!.replace(/[^\d]/g, "");
     
-    alteraUsuario(cpfSemPontuacao, { senha: senhaNova }).then(resp => {
+    alterUserFromAuthBase(cpfSemPontuacao, { senha: senhaNova }).then(resp => {
       if (resp) {
         history.replace('/login');
       } else {

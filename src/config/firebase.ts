@@ -15,17 +15,113 @@ const config = {
 firebase.initializeApp(config);
 firebase.analytics();
 
+// ------------------------------ Funções ------------------------------ //
+
 export function timestampToDate(data: any) {
-  
   const time = new firebase.firestore.Timestamp(data.seconds, data.nanoseconds);
-  
   return time.toDate();
-  
 }
 
 export function dateToTimestamp(date: Date) {
   return firebase.firestore.Timestamp.fromDate(date);
 }
+
+// ------------------------------ Keys ------------------------------ //
+
+export function getKeyFromKeysBase(tipo: 'fisioterapeuta' | 'paciente' | 'avaliacao', subChave: string | null = null): Promise<number> {
+  return new Promise((resolve, reject) => {
+    
+    let path = 'keys/' + tipo;
+    if (subChave) {
+      path += '/' + subChave;
+    }
+    
+    const ref = firebase.database().ref(path);
+    
+    ref.once('value', (snapshot) => {
+      
+      const result = snapshot.val();
+      
+      const novoVal = parseInt(result ? (result + 1) : 1);
+      
+      ref.set(novoVal);
+      resolve(novoVal);
+      
+    });
+    
+  });
+}
+
+// ------------------------------ AuthBase ------------------------------ //
+
+export function addUserToAuthBase(cpf: string, email: string, senha: string, id: string, nome: string, tipo: 'F' | 'P', ativo: boolean) {
+  return new Promise((resolve, reject) => {
+    
+    const usuario = new Usuario(id, email, senha, nome, tipo, ativo);
+    
+    try {
+      firebase.database().ref('users/' + cpf).set(usuario).then((data) => {
+        resolve(true);
+      }, (error) => {
+        resolve(false);
+      })
+    } catch (error) {
+      console.log(error);
+      resolve(false);
+    }
+    
+  });
+}
+
+export function deleteUserFromAuthBase(cpf: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.remove().then(function() {
+      resolve(true);
+    })
+    .catch(function(error) {
+      reject(error.message)
+    });
+    
+  });
+}
+
+export function getUserFromAuthBase(cpf: string){
+  return new Promise<Usuario | null>((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.once('value', snapshot => {
+      const usu = snapshot.val();
+      if (usu === null) {
+        resolve(null);
+        return;
+      }
+      resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
+    });
+    
+  });
+}
+
+export function alterUserFromAuthBase(cpf: string, dados: any) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('users/' + cpf);
+    
+    ref.once('value', snapshot => {
+      ref.update({ ...dados }).then(resp => {
+        resolve(true);
+      }, error => {
+        resolve(false);
+      });
+    })
+    
+  });
+}
+
+// ------------------------------ Fisioterapeuta ------------------------------ //
 
 export function getKeyNovoFisioterapeuta(): Promise<string> {
   
@@ -55,18 +151,6 @@ export async function cadastrarFisioterapeuta(key: string, data: any) {
       console.log(error);
       resolve(false);
     }
-    
-  });
-}
-
-export function buscaFisioterapeutaPorEmail(email: string) {
-  return new Promise((resolve, reject) => {
-    
-    const ref = firebase.database().ref('fisioterapeutas/');
-  
-    ref.orderByChild('email').equalTo(email).on('value', function(data) {
-      resolve(data);
-    })
     
   });
 }
@@ -132,122 +216,7 @@ export function getUltimosFisioterapeutasCadastrados(limit: number | null) {
   });
 }
 
-export function addUserToAuthBase(cpf: string, email: string, senha: string, id: string, nome: string, tipo: 'F' | 'P', ativo: boolean) {
-  return new Promise((resolve, reject) => {
-    
-    const usuario = new Usuario(id, email, senha, nome, tipo, ativo);
-    
-    try {
-      firebase.database().ref('users/' + cpf).set(usuario).then((data) => {
-        resolve(true);
-      }, (error) => {
-        resolve(false);
-      })
-    } catch (error) {
-      console.log(error);
-      resolve(false);
-    }
-    
-  });
-}
-
-export function deleteUserFromAuthBase(cpf: string) {
-  return new Promise((resolve, reject) => {
-    
-    const ref = firebase.database().ref('users/' + cpf);
-    
-    ref.remove().then(function() {
-      resolve(true);
-    })
-    .catch(function(error) {
-      reject(error.message)
-    });
-    
-  });
-}
-
-export function authFromBaseWithCpf(cpf: string, senha: string): Promise<Usuario | null> {
-  return new Promise((resolve, reject) => {
-    
-    const ref = firebase.database().ref('users/' + cpf);
-    
-    ref.once('value', snapshot => {
-      
-      const usu = snapshot.val();
-      
-      if (usu) {
-        
-        if (usu.senha === senha) {
-          resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
-        } else {
-          resolve(null);
-        }
-        
-      } else {
-        resolve(null)
-      }
-      
-    })
-    
-  });
-}
-
-export function getUserFromAuthBase(cpf: string){
-  return new Promise<Usuario | null>((resolve, reject) => {
-    
-    const ref = firebase.database().ref('users/' + cpf);
-    
-    ref.once('value', snapshot => {
-      const usu = snapshot.val();
-      if (usu === null) {
-        resolve(null);
-        return;
-      }
-      resolve(new Usuario(usu.id, usu.email, usu.senha, usu.nome, usu.tipo, usu.ativo));
-    });
-    
-  });
-}
-
-export function alteraUsuario(cpf: string, dados: any) {
-  return new Promise((resolve, reject) => {
-    
-    const ref = firebase.database().ref('users/' + cpf);
-    
-    ref.once('value', snapshot => {
-      ref.update({ ...dados }).then(resp => {
-        resolve(true);
-      }, error => {
-        resolve(false);
-      });
-    })
-    
-  });
-}
-
-export function buscaGruposPacientes() {
-  return new Promise((resolve, reject) => {
-    
-    const ref = firebase.database().ref('grupos_pacientes');
-    
-    ref.once('value', snapshot => {
-      
-      const grupos = snapshot.val();
-      const retorno: Array<{ codigo: string, descricao: string }> = [];
-      
-      const keys = Object.keys(grupos);
-      
-      for (const key of keys) {
-        retorno.push({ codigo: key, descricao: grupos[key].descricao });
-      }
-      
-      resolve(retorno);
-      
-    });
-    
-  })
-}
-
+// ------------------------------ Pacientes ------------------------------ //
 
 export function cadastrarPaciente(key: string, data: any) {
   return new Promise((resolve, reject) => {
@@ -358,6 +327,8 @@ export function buscaPacientesDoFisioterapeuta(idFisio: string) {
   });
 }
 
+// ------------------------------ Avaliações ------------------------------ //
+
 export function buscaAvaliacoesDoPaciente(idPaciente: string) {
   return new Promise((resolve, reject) => {
     
@@ -392,26 +363,27 @@ export function cadastrarAvaliacao(key: string, idPaciente: string, dados: any) 
   });
 }
 
-export function getKeyFromKeysBase(tipo: 'fisioterapeuta' | 'paciente' | 'avaliacao', subChave: string | null = null): Promise<number> {
+// ------------------------------ Grupos de Pacientes ------------------------------ //
+
+export function buscaGruposPacientes() {
   return new Promise((resolve, reject) => {
     
-    let path = 'keys/' + tipo;
-    if (subChave) {
-      path += '/' + subChave;
-    }
+    const ref = firebase.database().ref('grupos_pacientes');
     
-    const ref = firebase.database().ref(path);
-    
-    ref.once('value', (snapshot) => {
+    ref.once('value', snapshot => {
       
-      const result = snapshot.val();
+      const grupos = snapshot.val();
+      const retorno: Array<{ codigo: string, descricao: string }> = [];
       
-      const novoVal = parseInt(result ? (result + 1) : 1);
+      const keys = Object.keys(grupos);
       
-      ref.set(novoVal);
-      resolve(novoVal);
+      for (const key of keys) {
+        retorno.push({ codigo: key, descricao: grupos[key].descricao });
+      }
+      
+      resolve(retorno);
       
     });
     
-  });
+  })
 }
