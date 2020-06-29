@@ -334,11 +334,27 @@ export function buscaPacientesDoFisioterapeuta(idFisio: string) {
 export function buscaAvaliacoesDoPaciente(idPaciente: string) {
   return new Promise((resolve, reject) => {
     
-    const ref = firebase.database().ref('avaliacoes/' + idPaciente);
+    const ref = firebase.database().ref('avaliacao/' + idPaciente);
     
     ref.once('value', (snapshot) => {
-      resolve(snapshot.val());
-    })
+      
+      const fisios = snapshot.val();
+      const retorno = [];
+      
+      if (!fisios) {
+        resolve([]);
+        return;
+      }
+      
+      const keys = Object.keys(fisios);
+      
+      for (const key of keys) {
+        retorno.push({ codigo: key, ...fisios[key] });
+      }
+      
+      resolve(retorno);
+      
+    });
     
   });
 }

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { camera, checkmarkSharp, timeSharp, closeSharp } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 import { localeVars } from './../config/localeVars';
-import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao } from '../config/firebase';
+import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao, dateToTimestamp } from '../config/firebase';
 
 interface CadastrarAvaliacaoParams extends RouteComponentProps<{
   idpaciente: string;
@@ -187,13 +187,12 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     setSalvouFotos(true);
     
     const dados = {
-      data: new Date(dataAvaliacao),
+      data: dateToTimestamp(new Date(dataAvaliacao)),
       observacoes: observacoes
     };
     
     cadastrarAvaliacao(id, idPaciente, dados).then(resp => {
       setGravando(false);
-      // props.history.push('/avaliacoes');
       props.history.goBack();
     });
     

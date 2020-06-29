@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonFab, IonFabButton, IonIcon, IonGrid } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
-import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente } from '../config/firebase';
+import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente, timestampToDate } from '../config/firebase';
 import { add } from 'ionicons/icons';
 import { formatCpf } from './../config/utils';
+import { time } from 'console';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   idPaciente?: string;
@@ -85,6 +86,12 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
       return data;
     }
   })
+  
+  for(let avaliacao of listaAvaliacoes) {
+    let data = timestampToDate(avaliacao.data);
+    console.log(data);
+    avaliacao.dataMostra = data.getDate() + '/' + (data.getMonth() + 1) + '/' + data.getFullYear();
+  }
   
   return (
     <IonPage>
@@ -172,8 +179,11 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
         {paciente && <div>
           
           {!carregandoAvaliacoes && listaAvaliacoes.length > 0 && <IonList>
-          
+            {listaAvaliacoes.map((value, key) => <IonItem key={key}>
+              Avaliação do dia { value.dataMostra }
+            </IonItem>)}
           </IonList>}
+          
           {!carregandoAvaliacoes && listaAvaliacoes.length === 0 && <IonRow>
             <IonCol className="ion-text-center">
               Ainda não há avaliações cadastradas!
