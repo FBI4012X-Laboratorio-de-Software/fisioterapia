@@ -15,6 +15,8 @@ const config = {
 firebase.initializeApp(config);
 firebase.analytics();
 
+const storage = firebase.storage();
+
 // ------------------------------ Funções ------------------------------ //
 
 export function timestampToDate(data: any) {
@@ -386,4 +388,18 @@ export function buscaGruposPacientes() {
     });
     
   })
+}
+
+// ------------------------------ Firebase Storage ------------------------------ //
+
+function saveBase64InFirebaseStorage(path: string, fileName: string, base64: string) {
+  return storage.ref(path).child(fileName).putString(base64, 'base64', {contentType:'image/jpg'});
+}
+
+export function salvaImagemAvaliacao(idPaciente: string, idAvaliacao: string, fileName: string, base64: string) {
+  
+  let base = base64.replace('data:image/png;base64,', '');
+  
+  return saveBase64InFirebaseStorage('/avaliacoes/' + idPaciente + '/' + idAvaliacao, fileName, base);
+  
 }

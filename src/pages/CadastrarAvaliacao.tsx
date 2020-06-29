@@ -1,16 +1,22 @@
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, useIonViewWillEnter, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput, IonProgressBar } from '@ionic/react';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import { useState } from 'react';
-import { camera, checkmarkSharp } from 'ionicons/icons';
+import { camera, checkmarkSharp, timeSharp, closeSharp } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 import { localeVars } from './../config/localeVars';
-import { buscaPacientePorId } from '../config/firebase';
+import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao } from '../config/firebase';
 
 interface CadastrarAvaliacaoParams extends RouteComponentProps<{
   idpaciente: string;
   idavaliacao?: string;
 }> {}
+
+interface GravandoImagem {
+  salvando: boolean;
+  percentualSalvo: number;
+  erro: boolean;
+}
 
 const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   
@@ -28,12 +34,33 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const [idAnter, setIdAnter] = useState<string>('');
   const [carregandoPaciente, setCarregandoPaciente] = useState<boolean>(false);
   const [carregandoAvaliacao, setCarregandoAvaliacao] = useState<boolean>(false);
+  const [idGrava, setIdGrava] = useState<string>();
+  
+  const [gravando, setGravando] = useState<boolean>(false);
+  const [gravandoFotoFrontal, setGravandoFotoFrontal] = useState<GravandoImagem>();
+  const [gravandoFotoCostas, setGravandoFotoCostas] = useState<GravandoImagem>();
+  const [gravandoFotoEsquerda, setGravandoFotoEsquerda] = useState<GravandoImagem>();
+  const [gravandoFotoDireita, setGravandoFotoDireita] = useState<GravandoImagem>();
+  const [erroGravacao, setErroGravacao] = useState<string>('');
+  const [salvouFotos, setSalvouFotos] = useState<boolean>(false);
   
   const routeName = 'Cadastrar avaliação'
   const { takePhoto } = usePhotoGallery();
   
   const idPaciente = props.match.params.idpaciente;
   const idAvaliacao = props.match.params.idavaliacao;
+  
+  const monthNames = localeVars.monthNames;
+  const monthShortNames = localeVars.monthShortNames
+  const dayNames = localeVars.dayNames
+  const dayShortNames = localeVars.dayShortNames
+  
+  let dadosValidos = false;
+  if (!!dataAvaliacao && !!fotoCostas && !!fotoDireita && !!fotoEsquerda && !!fotoFrontal) {
+    dadosValidos = true;
+  }
+  
+  const carregando = carregandoAvaliacao || carregandoPaciente;
   
   if (!idAnter || idAnter !== idPaciente + idAvaliacao) {
     
@@ -49,7 +76,7 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
       
       setCarregandoAvaliacao(true);
       
-      
+      // TODO carrega avaliação
       
     }
     
@@ -74,7 +101,7 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
       return;
     }
     
-    funcSet({ webviewPath: foto.webPath });
+    funcSet({ webviewPath: foto.webviewPath, base64: foto.base64 });
     
   }
   
@@ -99,19 +126,82 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   
   const cadastrar = () => {
     
+    if (idAvaliacao) {
+      cadastraAvaliacao(idAvaliacao);
+      setIdGrava(idAvaliacao);
+    } else {
+      getKeyNovaAvaliacao(idPaciente).then(key => {
+        setIdGrava(key);
+        cadastraAvaliacao(key);
+      })
+    }
+    
   }
   
-  const monthNames = localeVars.monthNames;
-  const monthShortNames = localeVars.monthShortNames
-  const dayNames = localeVars.dayNames
-  const dayShortNames = localeVars.dayShortNames
-  
-  let dadosValidos = false;
-  if (!!dataAvaliacao && !!fotoCostas && !!fotoDireita && !!fotoEsquerda && !!fotoFrontal) {
-    dadosValidos = true;
+  function cadastraAvaliacao(id: string) {
+    
+    setGravando(true);
+    
+    gravaFoto(setGravandoFotoFrontal, 'frontal', fotoFrontal!.base64!, id);
+    gravaFoto(setGravandoFotoCostas, 'costas', fotoCostas!.base64!, id);
+    gravaFoto(setGravandoFotoEsquerda, 'esquerda', fotoEsquerda!.base64!, id);
+    gravaFoto(setGravandoFotoDireita, 'direita', fotoDireita!.base64!, id);
+    
   }
   
-  const carregando = carregandoAvaliacao || carregandoPaciente;
+  function gravaFoto(funcSetGrava: any, nomeFoto: string, base64: string, idAval: string) {
+    funcSetGrava({ salvando: true, percentualSalvo: 0, erro: false });
+    salvaImagemAvaliacao(idPaciente, idAval, nomeFoto, base64).on('state_changed', snapshot => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      funcSetGrava({ salvando: true, percentualSalvo: progress, erro: false });
+    }, error => {
+      funcSetGrava({ salvando: false, percentualSalvo: 100, erro: true });
+      setErroGravacao('Erro ao salvar imagem...');
+      console.error(error);
+      verificaFotosSalvas(idAval);
+    }, () => {
+      funcSetGrava({ salvando: false, percentualSalvo: 100, erro: false });
+      verificaFotosSalvas(idAval);
+    });
+  }
+  
+  function verificaFotosSalvas(id: string) {
+    // TODO se der erro em uma deve apagar todas do storage
+    
+    if (gravandoFotoFrontal?.percentualSalvo !== 100) {
+      return;
+    }
+    
+    if (gravandoFotoCostas?.percentualSalvo !== 100) {
+      return;
+    }
+    
+    if (gravandoFotoEsquerda?.percentualSalvo !== 100) {
+      return;
+    }
+    
+    if (gravandoFotoDireita?.percentualSalvo !== 100) {
+      return;
+    }
+    
+    setSalvouFotos(true);
+    
+    const dados = {
+      data: new Date(dataAvaliacao),
+      observacoes: observacoes
+    };
+    
+    cadastrarAvaliacao(id, idPaciente, dados).then(resp => {
+      setGravando(false);
+      // props.history.push('/avaliacoes');
+      props.history.goBack();
+    });
+    
+  }
+  
+  if (gravando && idGrava && !salvouFotos) {
+    verificaFotosSalvas(idGrava);
+  }
   
   return (
     <IonPage>
@@ -126,6 +216,64 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
       </IonHeader>
       
       <IonContent className="ion-padding">
+        
+        <IonModal isOpen={gravando} cssClass="smaller-modal-40" backdropDismiss={false}>
+          <IonContent className="ion-padding">
+            
+            <h4>
+              Salvando Imagens...
+            </h4>
+            
+            <IonRow>
+              <IonCol size="10">
+                Frontal
+                <IonProgressBar value={ gravandoFotoFrontal?.percentualSalvo }></IonProgressBar>
+              </IonCol>
+              <IonCol size="1">
+                {gravandoFotoFrontal?.percentualSalvo === 100 && !gravandoFotoFrontal?.erro && <IonIcon icon={checkmarkSharp}></IonIcon>}
+                {gravandoFotoFrontal?.percentualSalvo === 100 && gravandoFotoFrontal?.erro && <IonIcon icon={closeSharp}></IonIcon>}
+              </IonCol>
+            </IonRow>
+            
+            <IonRow>
+              <IonCol size="10">
+                Costas
+                <IonProgressBar value={ gravandoFotoCostas?.percentualSalvo }></IonProgressBar>
+              </IonCol>
+              <IonCol size="1">
+                {gravandoFotoCostas?.percentualSalvo === 100 && !gravandoFotoCostas?.erro && <IonIcon icon={checkmarkSharp}></IonIcon>}
+                {gravandoFotoCostas?.percentualSalvo === 100 && gravandoFotoCostas?.erro && <IonIcon icon={closeSharp}></IonIcon>}
+              </IonCol>
+            </IonRow>
+            
+            <IonRow>
+              <IonCol size="10">
+                Esquerda
+                <IonProgressBar value={ gravandoFotoEsquerda?.percentualSalvo }></IonProgressBar>
+              </IonCol>
+              <IonCol size="1">
+                {gravandoFotoEsquerda?.percentualSalvo === 100 && !gravandoFotoEsquerda?.erro && <IonIcon icon={checkmarkSharp}></IonIcon>}
+                {gravandoFotoEsquerda?.percentualSalvo === 100 && gravandoFotoEsquerda?.erro && <IonIcon icon={closeSharp}></IonIcon>}
+              </IonCol>
+            </IonRow>
+            
+            <IonRow>
+              <IonCol size="10">
+                Direita
+                <IonProgressBar value={ gravandoFotoDireita?.percentualSalvo }></IonProgressBar>
+              </IonCol>
+              <IonCol size="1">
+                {gravandoFotoDireita?.percentualSalvo === 100 && !gravandoFotoDireita?.erro && <IonIcon icon={checkmarkSharp}></IonIcon>}
+                {gravandoFotoDireita?.percentualSalvo === 100 && gravandoFotoDireita?.erro && <IonIcon icon={closeSharp}></IonIcon>}
+              </IonCol>
+            </IonRow>
+            
+            {salvouFotos && <h4 className="ion-margin-top ion-padding-top">
+              Salvando avaliação...
+            </h4>}
+            
+          </IonContent>
+        </IonModal>
         
         <IonModal isOpen={showModalFoto}>
           <IonHeader>
@@ -174,14 +322,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
           
           <IonRow className="ion-margin-top">
             <IonCol>
-              {fotoFrontal && <IonImg src={fotoFrontal.webviewPath} onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
+              {fotoFrontal && <IonImg src={ fotoFrontal.webviewPath } onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
               {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >
                 Fontal
                 <IonIcon icon={camera} slot="start" />
               </IonButton>}
             </IonCol>
             <IonCol>
-              {fotoCostas && <IonImg src={fotoCostas.webviewPath} onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
+              {fotoCostas && <IonImg src={ fotoCostas.webviewPath } onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
               {!fotoCostas && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoCostas) } }>
                 Costas
                 <IonIcon icon={camera} slot="start" />
@@ -191,14 +339,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
           
           <IonRow>
             <IonCol>
-              {fotoEsquerda && <IonImg src={fotoEsquerda.webviewPath} onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
+              {fotoEsquerda && <IonImg src={ fotoEsquerda.webviewPath } onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
               {!fotoEsquerda && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoEsquerda) } }>
                 Esquerda
                 <IonIcon icon={camera} slot="start" />
               </IonButton>}
             </IonCol>
             <IonCol>
-              {fotoDireita && <IonImg src={fotoDireita.webviewPath} onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
+              {fotoDireita && <IonImg src={ fotoDireita.webviewPath } onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
               {!fotoDireita && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoDireita) } }>
                 Direita
                 <IonIcon icon={camera} slot="start" />

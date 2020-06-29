@@ -1,0 +1,14 @@
+
+.smaller-modal-20 .modal-wrapper {
+  height: 20%;
+  top: 80%;
+  position: absolute; 
+  display: block;  
+}
+
+.smaller-modal-40 .modal-wrapper {
+  height: 40%;
+  top: 60%;
+  position: absolute; 
+  display: block;  
+}

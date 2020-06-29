@@ -64,3 +64,23 @@ export function validaEmail(email: string) {
     return false;
   }
 }
+
+export async function readAsBase64(strBlob: string) {
+  // Fetch the photo, read as a blob, then convert to base64 format
+  const response = await fetch(strBlob);
+  const blob = await response.blob();
+  
+  return await convertBlobToBase64(blob) as string;  
+}
+
+export function convertBlobToBase64(blob: Blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
