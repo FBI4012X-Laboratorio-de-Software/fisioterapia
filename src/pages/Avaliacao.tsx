@@ -89,7 +89,6 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
   
   for(let avaliacao of listaAvaliacoes) {
     let data = timestampToDate(avaliacao.data);
-    console.log(data);
     avaliacao.dataMostra = data.getDate() + '/' + (data.getMonth() + 1) + '/' + data.getFullYear();
   }
   
