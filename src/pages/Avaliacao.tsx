@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonFab, IonFabButton, IonIcon, IonGrid } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonFab, IonFabButton, IonIcon, IonGrid, IonCheckbox } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
 import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente, timestampToDate } from '../config/firebase';
-import { add } from 'ionicons/icons';
+import { add, mailUnreadSharp, pencil, gitCompareOutline } from 'ionicons/icons';
 import { formatCpf } from './../config/utils';
 import { time } from 'console';
 
@@ -26,10 +26,13 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
   const [listaAvaliacoes, setListaAvaliacoes] = useState<any[]>([]);
   const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState<boolean>(false);
   const [filtroPaciente, setFiltroPaciente] = useState<string>('');
+  const [mostraEditar, setMostraEditar] = useState<boolean>(false);
+  const [mostraComparar, setMostraComparar] = useState<boolean>(false);
   
   const routeName = 'Avaliações';
   
   useIonViewWillEnter(() => {
+    
     setCarregandoPacientes(true);
     carregaPacientes();
     setFiltroPaciente('');
@@ -66,6 +69,9 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
     buscaAvaliacoesDoPaciente(novoPaciente.codigo).then((resp: any) => {
       
       if (resp) {
+        for(let r of resp) {
+          r.selecionado = false;
+        }
         setListaAvaliacoes(resp);
       } else {
         setListaAvaliacoes([]);
@@ -87,7 +93,35 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
     }
   })
   
-  for(let avaliacao of listaAvaliacoes) {
+  const selecionaItem = (item: any) => {
+    item.selecionado = !item.selecionado;
+    
+    let qtdSelec = 0;
+    for(let avali of listaAvaliacoes) {
+      if (avali.selecionado) qtdSelec++;
+    }
+    
+    setMostraEditar(false);
+    setMostraComparar(false);
+    if (qtdSelec === 1) {
+      setMostraEditar(true);
+    } else if (qtdSelec === 2) {
+      setMostraComparar(true);
+    }
+    
+  }
+  
+  const editarAvaliacao = () => {
+    let idAval = '';
+    for (let avali of listaAvaliacoes) {
+      if (avali.selecionado) {
+        idAval = avali.codigo;
+      }
+    }
+    props.history.push('/avaliacao/' + paciente?.codigo + '/' + idAval );
+  }
+  
+  for (let avaliacao of listaAvaliacoes) {
     let data = timestampToDate(avaliacao.data);
     avaliacao.dataMostra = data.getDate() + '/' + (data.getMonth() + 1) + '/' + data.getFullYear();
   }
@@ -179,6 +213,8 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
           
           {!carregandoAvaliacoes && listaAvaliacoes.length > 0 && <IonList>
             {listaAvaliacoes.map((value, key) => <IonItem key={key}>
+              <IonCheckbox slot="start" value={value.selecionado} onIonChange={e => selecionaItem(value)}>
+              </IonCheckbox>
               Avaliação do dia { value.dataMostra }
             </IonItem>)}
           </IonList>}
@@ -188,7 +224,7 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
               Ainda não há avaliações cadastradas!
             </IonCol>
           </IonRow>}
-            
+          
           {carregandoAvaliacoes && <IonRow>
             <IonCol className="ion-text-center ion-margin-top">
               <IonSpinner></IonSpinner>
@@ -196,6 +232,12 @@ const Avaliacao: React.FC<FisioterapeutaProps> = props => {
           </IonRow>}
           
           {!carregandoAvaliacoes && <IonFab vertical="bottom" horizontal="end" slot="fixed">
+            {mostraEditar && <IonFabButton color="warning" className="ion-margin-bottom" onClick={() => editarAvaliacao()}>
+              <IonIcon icon={pencil} />
+            </IonFabButton>}
+            {mostraComparar && <IonFabButton color="success" className="ion-margin-bottom">
+              <IonIcon icon={gitCompareOutline} />
+            </IonFabButton>}
             <IonFabButton onClick={() => props.history.push('/avaliacao/' + paciente.codigo)}>
               <IonIcon icon={add} />
             </IonFabButton>

@@ -1,11 +1,13 @@
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput, IonProgressBar } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput, IonProgressBar, IonSpinner, IonAlert } from '@ionic/react';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import { useState } from 'react';
-import { camera, checkmarkSharp, timeSharp, closeSharp } from 'ionicons/icons';
+import { camera, checkmarkSharp, timeSharp, closeSharp, closeOutline } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 import { localeVars } from './../config/localeVars';
-import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao, dateToTimestamp } from '../config/firebase';
+import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao, dateToTimestamp, buscaAvaliacaoPorId, deleteImagensAvaliacao, deleteAvaliacaoPorId } from '../config/firebase';
+import { timestampToDate, getUrlFotoAvaliacao } from './../config/firebase';
+import { FOTO_FRONTAL, FOTO_COSTAS, FOTO_ESQUERDA, FOTO_DIREITA } from './../config/constants';
 
 interface CadastrarAvaliacaoParams extends RouteComponentProps<{
   idpaciente: string;
@@ -35,7 +37,8 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   const [carregandoPaciente, setCarregandoPaciente] = useState<boolean>(false);
   const [carregandoAvaliacao, setCarregandoAvaliacao] = useState<boolean>(false);
   const [idGrava, setIdGrava] = useState<string>();
-  
+  const [confirma, setConfirma] = useState<boolean>(false);
+
   const [gravando, setGravando] = useState<boolean>(false);
   const [gravandoFotoFrontal, setGravandoFotoFrontal] = useState<GravandoImagem>();
   const [gravandoFotoCostas, setGravandoFotoCostas] = useState<GravandoImagem>();
@@ -76,7 +79,17 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
       
       setCarregandoAvaliacao(true);
       
-      // TODO carrega avaliação
+      buscaAvaliacaoPorId(idPaciente, idAvaliacao).then((resp: any) => {
+        setObservacoes(resp.observacoes)
+        setDataAvaliacao(timestampToDate(resp.data).toString());
+        
+        carregaImagemStorage(FOTO_FRONTAL, setFotoFrontal);
+        carregaImagemStorage(FOTO_ESQUERDA, setFotoCostas);
+        carregaImagemStorage(FOTO_ESQUERDA, setFotoEsquerda);
+        carregaImagemStorage(FOTO_DIREITA, setFotoDireita);
+        
+        setCarregandoAvaliacao(false);
+      });
       
     }
     
@@ -88,6 +101,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     })
     
     setIdAnter(idPaciente + idAvaliacao);
+  }
+  
+  function carregaImagemStorage(nome: string, setFunc: any) {
+    
+    getUrlFotoAvaliacao(idPaciente, idAvaliacao!, nome).then(resp => {
+      setFunc({ firebaseUrl: resp });
+    })
+    
   }
   
   const tirarFoto = async (funcSet: Function) => {
@@ -112,13 +133,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
   }
   
   const alterarFoto = () => {
-    if (tituloModalFoto === 'Frontal') {
+    const titulo = tituloModalFoto.toLowerCase();
+    if (titulo === FOTO_FRONTAL) {
       tirarFoto(setFotoFrontal);
-    } else if (tituloModalFoto === 'Costas') {
+    } else if (titulo === FOTO_COSTAS) {
       tirarFoto(setFotoCostas);
-    } else if (tituloModalFoto === 'Esquerda') {
+    } else if (titulo === FOTO_ESQUERDA) {
       tirarFoto(setFotoEsquerda);
-    } else if (tituloModalFoto === 'Direita') {
+    } else if (titulo === FOTO_DIREITA) {
       tirarFoto(setFotoDireita);
     }
     setShowModalFoto(false);
@@ -142,14 +164,20 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     
     setGravando(true);
     
-    gravaFoto(setGravandoFotoFrontal, 'frontal', fotoFrontal!.base64!, id);
-    gravaFoto(setGravandoFotoCostas, 'costas', fotoCostas!.base64!, id);
-    gravaFoto(setGravandoFotoEsquerda, 'esquerda', fotoEsquerda!.base64!, id);
-    gravaFoto(setGravandoFotoDireita, 'direita', fotoDireita!.base64!, id);
+    gravaFoto(setGravandoFotoFrontal, FOTO_FRONTAL, fotoFrontal!.base64!, id);
+    gravaFoto(setGravandoFotoCostas, FOTO_COSTAS, fotoCostas!.base64!, id);
+    gravaFoto(setGravandoFotoEsquerda, FOTO_ESQUERDA, fotoEsquerda!.base64!, id);
+    gravaFoto(setGravandoFotoDireita, FOTO_DIREITA, fotoDireita!.base64!, id);
     
   }
   
   function gravaFoto(funcSetGrava: any, nomeFoto: string, base64: string, idAval: string) {
+    
+    if (!base64) {
+      funcSetGrava({ salvando: false, percentualSalvo: 100, erro: false });
+      return;
+    }
+    
     funcSetGrava({ salvando: true, percentualSalvo: 0, erro: false });
     salvaImagemAvaliacao(idPaciente, idAval, nomeFoto, base64).on('state_changed', snapshot => {
       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -198,6 +226,19 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
     
   }
   
+  const excluirAvaliacao = () => {
+    
+    deleteImagensAvaliacao(idPaciente, idAvaliacao!, FOTO_FRONTAL);
+    deleteImagensAvaliacao(idPaciente, idAvaliacao!, FOTO_COSTAS);
+    deleteImagensAvaliacao(idPaciente, idAvaliacao!, FOTO_ESQUERDA);
+    deleteImagensAvaliacao(idPaciente, idAvaliacao!, FOTO_DIREITA);
+    
+    deleteAvaliacaoPorId(idPaciente, idAvaliacao!).then(resp => {
+      props.history.goBack();
+    });
+    
+  }
+  
   if (gravando && idGrava && !salvouFotos) {
     verificaFotosSalvas(idGrava);
   }
@@ -216,6 +257,29 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
       
       <IonContent className="ion-padding">
         
+        <IonAlert
+            isOpen={confirma}
+            onDidDismiss={() => setConfirma(false)}
+            header={'Exclusão!'}
+            message={'Confirma exclusão da avaliação?'}
+            buttons={[
+              {
+                text: 'Cancelar',
+                role: 'cancel',
+                cssClass: 'secondary',
+                handler: () => {
+                  setConfirma(false);
+                }
+              },
+              {
+                text: 'Confirmar',
+                handler: () => {
+                  excluirAvaliacao();
+                }
+              }
+            ]}
+          />
+      
         <IonModal isOpen={gravando} cssClass="smaller-modal-40" backdropDismiss={false}>
           <IonContent className="ion-padding">
             
@@ -289,7 +353,7 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
             
             {fotoMostra && <IonRow>
               <IonCol>
-                <IonImg src={fotoMostra.webviewPath} />
+                <IonImg src={ fotoMostra.webviewPath ? fotoMostra.webviewPath : fotoMostra.firebaseUrl } />
               </IonCol>
             </IonRow>}
             
@@ -306,6 +370,12 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
         
         <IonToast isOpen={!!erro} onDidDismiss={e => setErro('')} message={erro} duration={4000} />
         
+        {carregando && <IonRow>
+          <IonCol className="ion-text-center">
+            <IonSpinner></IonSpinner>
+          </IonCol>  
+        </IonRow>}
+
         {!carregando && <div>
           
           <IonItem>
@@ -321,14 +391,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
           
           <IonRow className="ion-margin-top">
             <IonCol>
-              {fotoFrontal && <IonImg src={ fotoFrontal.webviewPath } onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
+              {fotoFrontal && <IonImg src={ fotoFrontal.webviewPath ? fotoFrontal.webviewPath : fotoFrontal.firebaseUrl } onClick={e => { mostrarFoto(fotoFrontal, 'Frontal') }} />}
               {!fotoFrontal && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoFrontal) } } >
                 Fontal
                 <IonIcon icon={camera} slot="start" />
               </IonButton>}
             </IonCol>
             <IonCol>
-              {fotoCostas && <IonImg src={ fotoCostas.webviewPath } onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
+              {fotoCostas && <IonImg src={ fotoCostas.webviewPath ? fotoCostas.webviewPath : fotoCostas.firebaseUrl } onClick={e => { mostrarFoto(fotoCostas, 'Costas') }} />}
               {!fotoCostas && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoCostas) } }>
                 Costas
                 <IonIcon icon={camera} slot="start" />
@@ -338,14 +408,14 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
           
           <IonRow>
             <IonCol>
-              {fotoEsquerda && <IonImg src={ fotoEsquerda.webviewPath } onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
+              {fotoEsquerda && <IonImg src={ fotoEsquerda.webviewPath ? fotoEsquerda.webviewPath : fotoEsquerda.firebaseUrl } onClick={e => { mostrarFoto(fotoEsquerda, 'Esquerda') }} />}
               {!fotoEsquerda && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoEsquerda) } }>
                 Esquerda
                 <IonIcon icon={camera} slot="start" />
               </IonButton>}
             </IonCol>
             <IonCol>
-              {fotoDireita && <IonImg src={ fotoDireita.webviewPath } onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
+              {fotoDireita && <IonImg src={ fotoDireita.webviewPath ? fotoDireita.webviewPath : fotoDireita.firebaseUrl } onClick={e => { mostrarFoto(fotoDireita, 'Direita') }} />}
               {!fotoDireita && <IonButton expand="block" onClick={ () => { tirarFoto(setFotoDireita) } }>
                 Direita
                 <IonIcon icon={camera} slot="start" />
@@ -359,6 +429,12 @@ const CadastrarAvaliacao: React.FC<CadastrarAvaliacaoParams> = props => {
           </IonItem>
 
           <IonRow className="ion-margin-top">
+           <IonCol className="ion-text-left">
+              <IonButton color="danger" onClick={ e => setConfirma(true) } disabled={!dadosValidos}>
+                <IonIcon icon={closeOutline} slot="start"></IonIcon>
+                Excluir
+              </IonButton>
+            </IonCol>
             <IonCol className="ion-text-right">
               <IonButton color="success" onClick={cadastrar} disabled={!dadosValidos}>
                 <IonIcon icon={checkmarkSharp} slot="start"></IonIcon>

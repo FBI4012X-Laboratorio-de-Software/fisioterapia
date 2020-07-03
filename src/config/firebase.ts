@@ -381,6 +381,33 @@ export function cadastrarAvaliacao(key: string, idPaciente: string, dados: any) 
   });
 }
 
+export function buscaAvaliacaoPorId(idPaciente: string, idAvaliacao: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('avaliacao/' + idPaciente + '/' + idAvaliacao);
+    
+    ref.once('value', (snapshot) => {
+      resolve(snapshot.val());
+    })
+    
+  });
+}
+
+export function deleteAvaliacaoPorId(idPaciente: string, idAvaliacao: string) {
+  return new Promise((resolve, reject) => {
+    
+    const ref = firebase.database().ref('avaliacao/' + idPaciente + '/' + idAvaliacao);
+    
+    ref.remove().then(function() {
+      resolve(true);
+    })
+    .catch(function(error) {
+      reject(error.message)
+    });
+    
+  });
+}
+
 // ------------------------------ Grupos de Pacientes ------------------------------ //
 
 export function buscaGruposPacientes() {
@@ -408,14 +435,42 @@ export function buscaGruposPacientes() {
 
 // ------------------------------ Firebase Storage ------------------------------ //
 
-function saveBase64InFirebaseStorage(path: string, fileName: string, base64: string) {
-  return storage.ref(path).child(fileName).putString(base64, 'base64', {contentType:'image/jpg'});
-}
-
 export function salvaImagemAvaliacao(idPaciente: string, idAvaliacao: string, fileName: string, base64: string) {
   
   let base = base64.replace('data:image/png;base64,', '');
   
   return saveBase64InFirebaseStorage('/avaliacoes/' + idPaciente + '/' + idAvaliacao, fileName, base);
   
+}
+
+export function getUrlFotoAvaliacao(idPaciente: string, idAvaliacao: string, nome: string) {
+  return getUrlToFirebaseStorage('/avaliacoes/' + idPaciente + '/' + idAvaliacao + '/' + nome);
+}
+
+export function deleteImagensAvaliacao(idPaciente: string, idAvaliacao: string, nome: string) {
+  return deleteFromFirebaseStorage('/avaliacoes/' + idPaciente + '/' + idAvaliacao + '/' + nome);
+}
+
+function deleteFromFirebaseStorage(path: string) {
+  return new Promise((resolve, reject) => {
+    
+    storage.ref(path).delete().then(resp => {
+      resolve(true);
+    }, error => {
+      resolve(false);
+    })
+    
+  });
+}
+
+function saveBase64InFirebaseStorage(path: string, fileName: string, base64: string) {
+  return storage.ref(path).child(fileName).putString(base64, 'base64', {contentType:'image/jpg'});
+}
+
+function getUrlToFirebaseStorage(path: string) {
+  return new Promise((resolve, reject) => {
+    storage.ref(path).getDownloadURL().then(resp => {
+      resolve(resp);
+    })
+  });
 }
