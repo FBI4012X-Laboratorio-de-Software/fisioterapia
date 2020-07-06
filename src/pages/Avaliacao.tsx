@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel, IonItem, IonList, IonModal, IonButton, IonRow, IonCol, useIonViewWillEnter, IonSearchbar, IonSpinner, IonRadioGroup, IonRadio, IonFab, IonFabButton, IonIcon, IonGrid, IonCheckbox } from '@ionic/react';
 import { RouteComponentProps } from 'react-router';
 import { getUltimosPacientesCadastrados, buscaAvaliacoesDoPaciente, timestampToDate } from '../config/firebase';
-import { add, mailUnreadSharp, pencil, gitCompareOutline } from 'ionicons/icons';
+import { add, pencil, gitCompareOutline } from 'ionicons/icons';
 import { formatCpf } from './../config/utils';
-import { time } from 'console';
 
 interface FisioterapeutaProps extends RouteComponentProps<{
   idPaciente?: string;

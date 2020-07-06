@@ -1,6 +1,7 @@
 {
   "name": "fisioterapeuta",
   "version": "0.0.1",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@capacitor/android": "^2.1.0",

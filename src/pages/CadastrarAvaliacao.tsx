@@ -2,7 +2,7 @@ import React from 'react';
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonRow, IonCol, IonImg, IonIcon, IonToast, IonModal, IonTextarea, IonItem, IonLabel, IonDatetime, IonInput, IonProgressBar, IonSpinner, IonAlert } from '@ionic/react';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import { useState } from 'react';
-import { camera, checkmarkSharp, timeSharp, closeSharp, closeOutline } from 'ionicons/icons';
+import { camera, checkmarkSharp, closeSharp, closeOutline } from 'ionicons/icons';
 import { RouteComponentProps } from 'react-router';
 import { localeVars } from './../config/localeVars';
 import { buscaPacientePorId, getKeyNovaAvaliacao, salvaImagemAvaliacao, cadastrarAvaliacao, dateToTimestamp, buscaAvaliacaoPorId, deleteImagensAvaliacao, deleteAvaliacaoPorId } from '../config/firebase';

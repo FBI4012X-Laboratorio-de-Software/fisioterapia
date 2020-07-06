@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
+
 import { useCamera } from '@ionic/react-hooks/camera';
-import { useFilesystem, base64FromPath } from '@ionic/react-hooks/filesystem';
-import { useStorage } from '@ionic/react-hooks/storage';
-import { isPlatform } from '@ionic/react';
-import { CameraResultType, CameraSource, CameraPhoto, Capacitor, FilesystemDirectory } from "@capacitor/core";
+import { CameraResultType, CameraSource } from "@capacitor/core";
 import { readAsBase64 } from "../config/utils";
 
 export interface Photo {
@@ -23,7 +20,9 @@ export function usePhotoGallery() {
     const cameraPhoto = await getPhoto({
       resultType: CameraResultType.Uri,
       source: CameraSource.Camera,
-      quality: 100
+      quality: 100,
+      height: 1008,
+      width: 756
     }).catch((err: any) => {
       erro = err;
     })
