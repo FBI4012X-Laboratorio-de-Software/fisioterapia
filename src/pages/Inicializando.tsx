@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonPage, IonContent } from '@ionic/react';
+import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import { Plugins } from '@capacitor/core';
 import { useState } from 'react';
 
@@ -49,9 +49,9 @@ const Inicializando: React.FC = (props: any) => {
   return (
     <IonPage>
       
-      <IonContent className="ion-padding">
+      <IonContent className="ion-padding ion-text-center">
         
-        carregando
+        <IonSpinner></IonSpinner>
         
       </IonContent>
         
