@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "594796409168",
+    "firebase_url": "https://fisioterapia-adbe8.firebaseio.com",
+    "project_id": "fisioterapia-adbe8",
+    "storage_bucket": "fisioterapia-adbe8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:594796409168:android:745bf4a7b4c97c8347fc55",
+        "android_client_info": {
+          "package_name": "br.ucs.fisioterapia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "594796409168-v8dj3jqgog0ijgceqljh3l0ok0bs385s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEt9_7QxHhBG6_0b7uDPlVkkpMTOOCWCk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "594796409168-v8dj3jqgog0ijgceqljh3l0ok0bs385s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
